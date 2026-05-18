@@ -25,7 +25,7 @@ export default function ProductDetail() {
   const canInc = qty < 20;
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edges={["left", "right", "bottom"]}>
       <ScrollView
         contentContainerStyle={{ paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}

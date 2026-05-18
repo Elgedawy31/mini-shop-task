@@ -23,8 +23,10 @@ export const api = {
   },
 
   categories: {
-    list(): Promise<ApiResponse<Category[]>> {
-      return apiClient.get<Category[]>("/categories");
+    async list(): Promise<ApiResponse<Category[]>> {
+      const res = await apiClient.get<{ items: Category[] }>("/categories");
+      if (!res.success) return res;
+      return { success: true, data: res.data.items ?? [], message: res.message };
     },
   },
 

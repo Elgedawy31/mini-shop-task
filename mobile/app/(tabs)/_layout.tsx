@@ -1,5 +1,6 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { theme } from "@/theme/theme";
 
@@ -8,6 +9,9 @@ function TabIcon(props: { name: React.ComponentProps<typeof FontAwesome>["name"]
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 56 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
@@ -16,8 +20,9 @@ export default function TabLayout() {
           backgroundColor: theme.colors.surface,
           borderTopColor: theme.colors.border,
           borderTopWidth: 1,
-          height: 64,
-          paddingTop: 10,
+          height: tabBarHeight,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
         },
         tabBarActiveTintColor: theme.colors.primary2,
         tabBarInactiveTintColor: theme.colors.muted,

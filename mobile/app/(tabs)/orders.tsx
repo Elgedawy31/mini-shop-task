@@ -42,7 +42,7 @@ export default function Orders() {
       <View
         style={{
           paddingHorizontal: theme.space[4],
-          paddingTop: theme.space[6],
+          paddingTop: theme.space[4],
           paddingBottom: theme.space[3],
           gap: 12,
         }}

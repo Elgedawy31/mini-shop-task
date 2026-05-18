@@ -29,7 +29,7 @@ export default function OrderDetail() {
   const statusIndex = order ? FLOW.indexOf(order.status) : -1;
 
   return (
-    <Screen padded={false}>
+    <Screen padded={false} edges={["left", "right", "bottom"]}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: theme.space[4], paddingBottom: theme.space[8], gap: 14 }}

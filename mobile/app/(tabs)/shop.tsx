@@ -16,7 +16,12 @@ export default function Shop() {
   const [category, setCategory] = useState<string>("all");
   const [page, setPage] = useState(1);
 
-  const { data: categories, isLoading: loadingCats } = useCategories();
+  const { data: categories = [], isLoading: loadingCats } = useCategories();
+
+  const categoryFilters = useMemo(
+    () => [{ slug: "all", name: "All" }, ...categories],
+    [categories]
+  );
   const params = useMemo(
     () => ({
       page,
@@ -38,7 +43,7 @@ export default function Shop() {
       <View
         style={{
           paddingHorizontal: theme.space[4],
-          paddingTop: theme.space[6],
+          paddingTop: theme.space[4],
           paddingBottom: theme.space[3],
           gap: 12,
         }}
@@ -74,7 +79,7 @@ export default function Shop() {
         />
 
         <FlatList
-          data={[{ slug: "all", name: "All" }, ...(categories ?? [])]}
+          data={categoryFilters}
           keyExtractor={(item) => item.slug}
           horizontal
           showsHorizontalScrollIndicator={false}

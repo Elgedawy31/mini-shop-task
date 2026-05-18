@@ -1,16 +1,22 @@
 import { ActivityIndicator, Pressable, Text, View, type ViewStyle } from "react-native";
+import { SafeAreaView, type Edge } from "react-native-safe-area-context";
 import { theme } from "@/theme/theme";
 
 export function Screen({
   children,
   padded = true,
+  edges = ["top", "left", "right"],
 }: {
   children: React.ReactNode;
   padded?: boolean;
+  /** Safe area edges — omit `top` when a stack header already handles the status bar. */
+  edges?: Edge[];
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
-      <View style={{ flex: 1, padding: padded ? theme.space[4] : 0 }}>{children}</View>
+      <SafeAreaView style={{ flex: 1 }} edges={edges}>
+        <View style={{ flex: 1, padding: padded ? theme.space[4] : 0 }}>{children}</View>
+      </SafeAreaView>
     </View>
   );
 }
