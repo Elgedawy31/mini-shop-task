@@ -15,6 +15,10 @@ export const forgotPasswordSchema = z.object({
   email: z.string().trim().email(),
 });
 
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token is required"),
+});
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   email: z.string().trim().email().optional(),
@@ -29,3 +33,4 @@ export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type SetupAdminInput = z.infer<typeof setupAdminSchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;

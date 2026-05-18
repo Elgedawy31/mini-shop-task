@@ -3,6 +3,7 @@ import { createAnonClient, createServiceClient, createUserClient } from "../lib/
 import type {
   ForgotPasswordInput,
   LoginInput,
+  RefreshTokenInput,
   RegisterInput,
   SetupAdminInput,
   UpdateProfileInput,
@@ -191,6 +192,31 @@ export async function setupFirstAdmin(input: SetupAdminInput): Promise<AuthSessi
   }
 
   return login({ email: input.email, password: input.password });
+}
+
+export async function refreshSession(input: RefreshTokenInput): Promise<AuthSessionPayload> {
+  const supabase = createAnonClient();
+
+  const { data, error } = await supabase.auth.refreshSession({
+    refresh_token: input.refreshToken,
+  });
+
+  if (error || !data.session || !data.user) {
+    throw new AppError({
+      code: "invalid_refresh_token",
+      message: "Session expired. Please sign in again.",
+      statusCode: 401,
+    });
+  }
+
+  const user = await loadProfile(data.user.id, data.user.email ?? "");
+
+  return mapSession(
+    data.session.access_token,
+    data.session.refresh_token,
+    data.session.expires_in,
+    user
+  );
 }
 
 export async function forgotPassword(input: ForgotPasswordInput): Promise<void> {

@@ -13,6 +13,7 @@ export const API_CONFIG = {
       ME: "/auth/me",
       SETUP_STATUS: "/auth/setup/status",
       SETUP: "/auth/setup",
+      REFRESH: "/auth/refresh",
     },
 
     PRODUCTS: {

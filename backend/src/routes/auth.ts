@@ -5,6 +5,7 @@ import { authenticate } from "../plugins/auth.js";
 import {
   forgotPasswordSchema,
   loginSchema,
+  refreshTokenSchema,
   registerSchema,
   setupAdminSchema,
   updateProfileSchema,
@@ -36,6 +37,12 @@ export async function authRoutes(app: FastifyInstance) {
     const body = parseBody(loginSchema, request.body);
     const session = await authService.login(body);
     sendSuccess(reply, session, { message: "Login successful" });
+  });
+
+  app.post("/auth/refresh", async (request, reply) => {
+    const body = parseBody(refreshTokenSchema, request.body);
+    const session = await authService.refreshSession(body);
+    sendSuccess(reply, session, { message: "Session refreshed" });
   });
 
   app.post("/auth/forgot-password", async (request, reply) => {

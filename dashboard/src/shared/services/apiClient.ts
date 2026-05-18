@@ -1,9 +1,10 @@
 import axios from "axios";
-import type { AxiosInstance, AxiosRequestConfig } from "axios";
+import type { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { API_CONFIG } from "../config/api";
 import { parseErrorBody, toFailureResponse } from "../lib/apiResponse";
 import type { ApiClientError, ApiResponse } from "../types/api";
-import Cookies from "js-cookie";
+import { authSession } from "@/features/auth/lib/authSession";
+import { refreshAccessToken } from "@/features/auth/lib/tokenRefresh";
 
 export type { ApiResponse, ApiClientError } from "../types/api";
 
@@ -12,6 +13,8 @@ export interface UploadProgress {
   total: number;
   percentage: number;
 }
+
+type RetryableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 class ApiClient {
   private client: AxiosInstance;
@@ -29,7 +32,7 @@ class ApiClient {
   private setupInterceptors() {
     this.client.interceptors.request.use(
       (config) => {
-        const token = Cookies.get(API_CONFIG.AUTH_TOKEN_KEY);
+        const token = authSession.getAccessToken();
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -40,7 +43,37 @@ class ApiClient {
 
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => Promise.reject(this.handleError(error))
+      async (error) => {
+        const original = error.config as RetryableConfig | undefined;
+        const status = error.response?.status;
+
+        const isAuthEndpoint =
+          typeof original?.url === "string" &&
+          (original.url.includes("/auth/login") ||
+            original.url.includes("/auth/setup") ||
+            original.url.includes("/auth/refresh") ||
+            original.url.includes("/auth/register"));
+
+        if (
+          status === 401 &&
+          original &&
+          !original._retry &&
+          !isAuthEndpoint &&
+          authSession.getRefreshToken()
+        ) {
+          original._retry = true;
+          const newToken = await refreshAccessToken();
+
+          if (newToken) {
+            original.headers.Authorization = `Bearer ${newToken}`;
+            return this.client.request(original);
+          }
+
+          authSession.clear();
+        }
+
+        return Promise.reject(this.handleError(error));
+      }
     );
   }
 

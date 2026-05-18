@@ -98,7 +98,7 @@ export const useLogin = () => {
 
       const response = await AuthService.login(credentials);
 
-      if (!response.success) {
+      if (!response.success || !response.token) {
         logger.error("❌ Login failed:", response.error || response.message);
         throw new Error(response.error || response.message || "Login failed");
       }
@@ -108,9 +108,9 @@ export const useLogin = () => {
     retry: false, // Disable retries for login to prevent double requests
     onSuccess: (data) => {
       logger.info("✅ Login mutation success");
-      // Cache user data
       if (data?.user && data.token) {
         queryClient.setQueryData(AUTH_QUERY_KEYS.user(), data.user);
+        queryClient.invalidateQueries({ queryKey: AUTH_QUERY_KEYS.user() });
       }
     },
     onError: (error) => {

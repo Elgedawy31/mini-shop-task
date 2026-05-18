@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useVerifyUser, useSetupStatus } from "@/features/auth/hooks/useAuth";
 import { AuthService } from "@/features/auth/services/authService";
@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
   const location = useLocation();
-  const hasToken = useMemo(() => AuthService.isAuthenticated(), []);
+  const hasToken = AuthService.isAuthenticated();
 
   const { data: setupStatus, isLoading: isSetupLoading } = useSetupStatus({
     enabled: !hasToken,

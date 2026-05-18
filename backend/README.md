@@ -75,6 +75,7 @@ Also seeds **3 categories** and **11 products**.
 | ------ | ----------------------- | ------------------------------------------------ |
 | POST   | `/auth/register`        | Public                                           |
 | POST   | `/auth/login`           | Public                                           |
+| POST   | `/auth/refresh`         | Public — `{ refreshToken }` → new access token   |
 | POST   | `/auth/forgot-password` | Public                                           |
 | GET    | `/auth/setup/status`    | Public — `{ needsSetup }` when no admin exists   |
 | POST   | `/auth/setup`           | Public — create first admin (only if none exist) |

@@ -3,7 +3,8 @@ import { API_CONFIG } from "@/shared/config/api";
 import { unwrapResponse } from "@/shared/lib/apiResponse";
 import type { ApiResponse, AuthPayload, AuthUser } from "@/shared/types/api";
 import logger from "@/shared/utils/logger";
-import Cookies from "js-cookie";
+import { authSession } from "../lib/authSession";
+import { parseAuthPayload } from "../lib/parseAuthPayload";
 
 export type User = AuthUser & { _id?: string };
 
@@ -57,31 +58,46 @@ function mapUser(user?: AuthUser): User | undefined {
 }
 
 function toAuthResult(raw: ApiResponse<AuthPayload> & Record<string, unknown>): AuthResult {
-  const unwrapped = unwrapResponse<AuthPayload>(raw);
+  const parsed = parseAuthPayload(raw);
 
-  if (!unwrapped.success) {
+  if (!parsed) {
+    const unwrapped = unwrapResponse<AuthPayload>(raw);
+    if (unwrapped.success === false) {
+      return {
+        success: false,
+        error: unwrapped.error ?? unwrapped.message ?? "Request failed",
+        message: unwrapped.message,
+        errors: unwrapped.errors,
+      };
+    }
+
     return {
       success: false,
-      error: unwrapped.error ?? unwrapped.message ?? "Request failed",
-      message: unwrapped.message,
-      errors: unwrapped.errors,
+      error: "Invalid authentication response from server",
     };
   }
 
-  const token =
-    (unwrapped.token as string | undefined) ?? (unwrapped.data as AuthPayload | undefined)?.token;
-  const user = mapUser(
-    (unwrapped.user as AuthUser | undefined) ?? (unwrapped.data as AuthPayload | undefined)?.user
-  );
+  const user = mapUser(parsed.user);
 
   return {
     success: true,
-    token,
+    token: parsed.token,
     user,
-    refreshToken: unwrapped.refreshToken as string | undefined,
-    expiresIn: unwrapped.expiresIn as number | undefined,
-    message: unwrapped.message as string | undefined,
+    refreshToken: parsed.refreshToken,
+    expiresIn: parsed.expiresIn,
+    message: (raw.message as string | undefined) ?? undefined,
   };
+}
+
+function persistSession(result: AuthResult): void {
+  if (!result.token) return;
+
+  authSession.save({
+    token: result.token,
+    refreshToken: result.refreshToken,
+    expiresIn: result.expiresIn,
+    user: result.user,
+  });
 }
 
 export class AuthService {
@@ -106,12 +122,9 @@ export class AuthService {
     const response = await apiClient.post<AuthPayload>(API_CONFIG.ENDPOINTS.AUTH.SETUP, payload);
     const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
 
-    if (result.success && result.token) {
-      this.setAuthToken(result.token);
-      if (result.user) this.setUserData(result.user);
-    }
-
-    if (!result.success) {
+    if (result.success) {
+      persistSession(result);
+    } else {
       logger.error("Setup failed:", result.error ?? result.message);
     }
 
@@ -126,12 +139,9 @@ export class AuthService {
 
     const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
 
-    if (result.success && result.token) {
-      this.setAuthToken(result.token);
-      if (result.user) this.setUserData(result.user);
-    }
-
-    if (!result.success) {
+    if (result.success) {
+      persistSession(result);
+    } else {
       logger.error("Login failed:", result.error ?? result.message);
     }
 
@@ -146,12 +156,9 @@ export class AuthService {
 
     const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
 
-    if (result.success && result.token) {
-      this.setAuthToken(result.token);
-      if (result.user) this.setUserData(result.user);
-    }
-
-    if (!result.success) {
+    if (result.success) {
+      persistSession(result);
+    } else {
       logger.error("Registration failed:", result.error ?? result.message);
     }
 
@@ -163,7 +170,11 @@ export class AuthService {
     const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
 
     if (result.success && result.user) {
-      this.setUserData(result.user);
+      authSession.save({
+        token: this.getAuthToken() ?? "",
+        refreshToken: authSession.getRefreshToken() ?? undefined,
+        user: result.user,
+      });
     }
 
     return result;
@@ -176,50 +187,68 @@ export class AuthService {
       return { success: false, error: "No authentication token found" };
     }
 
-    const response = await apiClient.get<AuthPayload>(API_CONFIG.ENDPOINTS.AUTH.ME);
-    const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
+    const response = await apiClient.get<{ user: AuthUser }>(API_CONFIG.ENDPOINTS.AUTH.ME);
+    const unwrapped = unwrapResponse<{ user: AuthUser }>(
+      response as ApiResponse<{ user: AuthUser }> & Record<string, unknown>
+    );
 
-    if (result.success && result.user) {
-      this.setUserData(result.user);
-      return result;
+    if (unwrapped.success === false) {
+      this.clearAuthData();
+      return {
+        success: false,
+        error: unwrapped.error ?? unwrapped.message ?? "Token verification failed",
+      };
     }
 
-    this.clearAuthData();
-    return {
-      success: false,
-      error: result.error ?? result.message ?? "Token verification failed",
-    };
+    const user = mapUser(
+      (unwrapped.user as AuthUser | undefined) ??
+        (unwrapped.data as { user?: AuthUser } | undefined)?.user
+    );
+
+    if (!user) {
+      this.clearAuthData();
+      return { success: false, error: "User profile not found" };
+    }
+
+    authSession.save({
+      token,
+      refreshToken: authSession.getRefreshToken() ?? undefined,
+      user,
+    });
+
+    return { success: true, user, token };
   }
 
   static isAuthenticated(): boolean {
-    return !!this.getAuthToken();
+    return authSession.isAuthenticated();
   }
 
   static getAuthToken(): string | null {
-    return Cookies.get(API_CONFIG.AUTH_TOKEN_KEY) || null;
+    return authSession.getAccessToken();
   }
 
   static setAuthToken(token: string): void {
-    Cookies.set(API_CONFIG.AUTH_TOKEN_KEY, token, { expires: 7 });
+    authSession.save({ token });
   }
 
   static getUserData(): User | null {
-    try {
-      const userData = localStorage.getItem("user");
-      return userData ? JSON.parse(userData) : null;
-    } catch {
-      return null;
-    }
+    const session = authSession.load();
+    if (!session?.user) return null;
+    return mapUser(session.user) ?? null;
   }
 
   static setUserData(user: User): void {
-    localStorage.setItem("user", JSON.stringify(user));
+    const token = this.getAuthToken();
+    if (!token) return;
+    authSession.save({
+      token,
+      refreshToken: authSession.getRefreshToken() ?? undefined,
+      user,
+    });
   }
 
   static clearAuthData(): void {
-    Cookies.remove(API_CONFIG.AUTH_TOKEN_KEY);
-    localStorage.removeItem("user");
-    localStorage.removeItem("refreshToken");
+    authSession.clear();
   }
 
   static validateLoginData(data: LoginRequest): { isValid: boolean; errors: string[] } {

@@ -17,6 +17,12 @@ function LoginPage() {
     }
   }, [isSetupLoading, setupStatus, navigate]);
 
+  useEffect(() => {
+    if (!isSetupLoading && !setupStatus?.needsSetup && AuthService.isAuthenticated()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isSetupLoading, setupStatus, navigate]);
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       logger.info("🚀 Starting login process...", { email: data.email });
@@ -25,13 +31,17 @@ function LoginPage() {
 
       logger.info("✅ Login successful:", result);
 
+      if (!result.token || !AuthService.isAuthenticated()) {
+        throw new Error("Login succeeded but the session could not be saved. Please try again.");
+      }
+
       if (result.user?.role !== "admin") {
         AuthService.clearAuthData();
         throw new Error("This dashboard is for admin accounts only.");
       }
 
       showSuccess("Login successful!");
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     } catch (error: unknown) {
       logger.error("❌ Error during login:", error);
 
@@ -42,7 +52,7 @@ function LoginPage() {
     }
   };
 
-  if (isSetupLoading || setupStatus?.needsSetup) {
+  if (isSetupLoading || setupStatus?.needsSetup || AuthService.isAuthenticated()) {
     return <FullScreenLoader message="Loading…" />;
   }
 

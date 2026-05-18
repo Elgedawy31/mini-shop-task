@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleApiError, showSuccess } from "@/shared/services/errorHandler";
 import { FullScreenLoader } from "@/shared/components/molecules/FullScreenLoader";
-import type { SetupAdminFormData } from "..";
+import { AuthService, type SetupAdminFormData } from "..";
 import SetupTemplate from "../components/SetupTemplate";
 import { useSetupAdmin, useSetupStatus } from "../hooks/useAuth";
 
@@ -19,7 +19,12 @@ function SetupPage() {
 
   const onSubmit = async (data: SetupAdminFormData) => {
     try {
-      await setupMutation.mutateAsync(data);
+      const result = await setupMutation.mutateAsync(data);
+
+      if (!result.token || !AuthService.isAuthenticated()) {
+        throw new Error("Account created but session could not be saved. Please sign in.");
+      }
+
       showSuccess("Admin account created. Welcome!");
       navigate("/dashboard", { replace: true });
     } catch (err) {
