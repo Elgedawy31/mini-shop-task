@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  ActivityIndicator,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -39,12 +38,10 @@ function OrdersHeader({
   status,
   onStatusChange,
   orderCount,
-  isFetching,
 }: {
   status: string;
   onStatusChange: (key: string) => void;
   orderCount: number;
-  isFetching: boolean;
 }) {
   const { colors } = useAppTheme();
   const headerOpacity = useSharedValue(0);
@@ -73,7 +70,7 @@ function OrdersHeader({
       ]}
     >
       <View style={{ gap: 4 }}>
-        <HStackTitle count={orderCount} isFetching={isFetching} />
+        <HStackTitle count={orderCount} />
         <AppText size={12} color={colors.muted}>
           Track your order history and current status.
         </AppText>
@@ -97,7 +94,7 @@ function OrdersHeader({
   );
 }
 
-function HStackTitle({ count, isFetching }: { count: number; isFetching: boolean }) {
+function HStackTitle({ count }: { count: number }) {
   const { colors, isDark } = useAppTheme();
 
   return (
@@ -121,13 +118,14 @@ function HStackTitle({ count, isFetching }: { count: number; isFetching: boolean
           </AppText>
         </View>
       ) : null}
-      {isFetching && count > 0 ? <ActivityIndicator size="small" color={colors.primary2} /> : null}
     </View>
   );
 }
 
 export default function Orders() {
+  const { colors } = useAppTheme();
   const [status, setStatus] = useState("all");
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
 
   const listParams = useMemo(
     () => ({
@@ -137,7 +135,7 @@ export default function Orders() {
     [status]
   );
 
-  const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
     useInfiniteMyOrders(listParams);
 
   const orders = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
@@ -165,13 +163,17 @@ export default function Orders() {
     []
   );
 
+  const handleRefresh = useCallback(async () => {
+    setIsPullRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsPullRefreshing(false);
+    }
+  }, [refetch]);
+
   const listHeader = (
-    <OrdersHeader
-      status={status}
-      onStatusChange={setStatus}
-      orderCount={totalCount}
-      isFetching={isFetching && !isFetchingNextPage && !isInitialLoading}
-    />
+    <OrdersHeader status={status} onStatusChange={setStatus} orderCount={totalCount} />
   );
 
   return (
@@ -189,8 +191,13 @@ export default function Orders() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
-        refreshing={isFetching && !isFetchingNextPage}
-        onRefresh={() => void refetch()}
+        refreshControl={
+          <RefreshControl
+            refreshing={isPullRefreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={colors.primary2}
+          />
+        }
         renderItem={renderOrder}
         ListEmptyComponent={
           isInitialLoading ? (
