@@ -1,27 +1,14 @@
 import { Tabs } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { getTabBarInset, TabBar } from "@/ui/TabBar";
+import { TabBar } from "@/ui/TabBar";
 
 export default function TabLayout() {
-  const insets = useSafeAreaInsets();
-  const tabBarInset = getTabBarInset(insets.bottom);
-
   return (
     <Tabs
       tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        sceneStyle: {
-          paddingBottom: tabBarInset,
-        },
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
-          elevation: 0,
-          height: 0,
-        },
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tabs.Screen name="shop" options={{ title: "Shop" }} />

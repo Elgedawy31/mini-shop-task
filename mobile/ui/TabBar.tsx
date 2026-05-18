@@ -1,13 +1,8 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useEffect } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, {
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from "react-native-reanimated";
+import { useEffect, useState } from "react";
+import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCart } from "@/features/cart/CartContext";
@@ -20,11 +15,7 @@ const TAB_ICONS: Record<string, React.ComponentProps<typeof FontAwesome>["name"]
   profile: "user",
 };
 
-const SPRING = { damping: 16, stiffness: 220, mass: 0.8 };
-
-export function getTabBarInset(bottomSafeArea: number) {
-  return 76 + Math.max(bottomSafeArea, 12);
-}
+const TAB_BAR_HEIGHT = 56;
 
 function TabItem({
   label,
@@ -41,24 +32,14 @@ function TabItem({
   onPress: () => void;
   onLongPress: () => void;
 }) {
-  const focus = useSharedValue(isFocused ? 1 : 0);
+  const scale = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
-    focus.value = withSpring(isFocused ? 1 : 0, SPRING);
-  }, [focus, isFocused]);
+    scale.value = withTiming(isFocused ? 1 : 0, { duration: 200 });
+  }, [isFocused, scale]);
 
-  const pillStyle = useAnimatedStyle(() => ({
-    opacity: focus.value,
-    transform: [{ scale: 0.88 + focus.value * 0.12 }],
-  }));
-
-  const iconWrapStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + focus.value * 0.1 }],
-  }));
-
-  const labelStyle = useAnimatedStyle(() => ({
-    color: interpolateColor(focus.value, [0, 1], [theme.colors.muted, theme.colors.primary2]),
-    opacity: 0.72 + focus.value * 0.28,
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + scale.value * 0.06 }],
   }));
 
   return (
@@ -70,11 +51,10 @@ function TabItem({
       accessibilityState={{ selected: isFocused }}
       accessibilityLabel={label}
     >
-      <Animated.View style={[styles.activePill, pillStyle]} />
-      <Animated.View style={[styles.iconWrap, iconWrapStyle]}>
+      <Animated.View style={iconStyle}>
         <FontAwesome
           name={icon}
-          size={20}
+          size={22}
           color={isFocused ? theme.colors.primary2 : theme.colors.muted}
         />
         {badge && badge > 0 ? (
@@ -83,7 +63,17 @@ function TabItem({
           </View>
         ) : null}
       </Animated.View>
-      <Animated.Text style={[styles.label, labelStyle]}>{label}</Animated.Text>
+      <Text
+        style={[
+          styles.label,
+          {
+            color: isFocused ? theme.colors.text : theme.colors.muted,
+            fontFamily: isFocused ? theme.font.semibold : theme.font.medium,
+          },
+        ]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -92,13 +82,33 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const cart = useCart();
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+  const [barWidth, setBarWidth] = useState(0);
+
+  const activeIndex = useSharedValue(state.index);
+
+  useEffect(() => {
+    activeIndex.value = withTiming(state.index, { duration: 220 });
+  }, [activeIndex, state.index]);
+
+  const onBarLayout = (e: LayoutChangeEvent) => {
+    setBarWidth(e.nativeEvent.layout.width);
+  };
+
+  const indicatorStyle = useAnimatedStyle(() => {
+    const count = state.routes.length || 1;
+    const tabWidth = barWidth / count;
+    const inset = 18;
+    return {
+      width: Math.max(tabWidth - inset * 2, 24),
+      transform: [{ translateX: activeIndex.value * tabWidth + inset }],
+    };
+  });
 
   return (
-    <View
-      pointerEvents="box-none"
-      style={[styles.wrapper, { paddingBottom: Math.max(insets.bottom, 12) }]}
-    >
-      <View style={styles.bar}>
+    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+      <View style={styles.bar} onLayout={onBarLayout}>
+        {barWidth > 0 ? <Animated.View style={[styles.indicator, indicatorStyle]} /> : null}
+
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const label =
@@ -140,82 +150,54 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
+export function getTabBarHeight(bottomInset: number) {
+  return TAB_BAR_HEIGHT + Math.max(bottomInset, 10);
+}
+
 const styles = StyleSheet.create({
-  wrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: theme.space[4],
-    paddingTop: theme.space[2],
+  container: {
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
   },
   bar: {
     flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(20,20,25,0.96)",
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    paddingVertical: 8,
-    paddingHorizontal: 6,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.45,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 16,
-      },
-    }),
+    height: TAB_BAR_HEIGHT,
+    alignItems: "stretch",
+  },
+  indicator: {
+    position: "absolute",
+    top: 0,
+    height: 3,
+    borderRadius: 999,
+    backgroundColor: theme.colors.primary2,
   },
   tab: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 8,
-    gap: 5,
-    minHeight: 56,
-  },
-  activePill: {
-    ...StyleSheet.absoluteFillObject,
-    marginHorizontal: 4,
-    marginVertical: 2,
-    borderRadius: theme.radii.lg,
-    backgroundColor: "rgba(255,122,24,0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.28)",
-  },
-  iconWrap: {
-    width: 28,
-    height: 28,
-    alignItems: "center",
-    justifyContent: "center",
+    gap: 4,
+    paddingTop: 6,
   },
   label: {
-    fontFamily: theme.font.medium,
     fontSize: 11,
-    letterSpacing: 0.2,
   },
   badge: {
     position: "absolute",
-    top: -4,
-    right: -10,
-    minWidth: 18,
-    height: 18,
+    top: -5,
+    right: -12,
+    minWidth: 17,
+    height: 17,
     borderRadius: 999,
-    paddingHorizontal: 5,
-    backgroundColor: theme.colors.primary2,
-    borderWidth: 2,
-    borderColor: theme.colors.surface,
+    paddingHorizontal: 4,
+    backgroundColor: theme.colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   badgeText: {
     color: "#FFF7ED",
     fontFamily: theme.font.bold,
-    fontSize: 10,
-    lineHeight: 12,
+    fontSize: 9,
+    lineHeight: 11,
   },
 });
