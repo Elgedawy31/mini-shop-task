@@ -2,11 +2,13 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Home } from "lucide-react";
 import { Layout } from "../shared/components/templates/Layout";
+import { ProtectedRoute } from "@/shared/components/organisms/ProtectedRoute";
 import { FullScreenLoader } from "@/shared/components/molecules/FullScreenLoader";
 
 // Lazy load pages for performance
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"));
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
+const OAuthCallbackPage = lazy(() => import("@/features/auth/pages/OAuthCallbackPage"));
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -23,20 +25,21 @@ export function AppRoutes() {
         <Routes>
           {/* Public Routes */}
           <Route path="/sign-in" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
           {/* Protected Layout Routes */}
           <Route
             path="*"
             element={
-              // <ProtectedRoute>
-              <Layout navigation={navigation} title="Mini Shop" showSidebar showHeader>
-                <Routes>
-                  <Route path="/dashboard" element={<DashboardPage />} />
-
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                </Routes>
-              </Layout>
+              <ProtectedRoute>
+                <Layout navigation={navigation} title="Mini Shop" showSidebar showHeader>
+                  <Routes>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  </Routes>
+                </Layout>
+              </ProtectedRoute>
             }
           />
         </Routes>

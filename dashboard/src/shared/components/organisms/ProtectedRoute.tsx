@@ -52,6 +52,11 @@ export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
-  // ✅ Authenticated & verified
+  if (user.role !== "admin") {
+    logger.info("🔒 Non-admin user, redirecting");
+    AuthService.clearAuthData();
+    return <Navigate to="/sign-in" state={{ from: location }} replace />;
+  }
+
   return <>{children}</>;
 }

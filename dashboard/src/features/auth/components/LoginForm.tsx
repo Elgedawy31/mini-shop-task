@@ -7,13 +7,19 @@ import { Button } from "@/shared/components/atoms/button";
 import { MemoizedLogo } from "@/shared/components/atoms/Logo";
 import { loginSchema, type LoginFormData } from "..";
 import { Link } from "react-router-dom";
+import { GoogleSignInButton } from "./GoogleSignInButton";
+import { isSupabaseConfigured } from "@/shared/lib/supabase";
 
 function LoginForm({
   onSubmit,
+  onGoogleSignIn,
   isPending,
+  isGooglePending,
 }: {
   onSubmit: (data: LoginFormData) => void;
+  onGoogleSignIn?: () => void;
   isPending: boolean;
+  isGooglePending?: boolean;
 }) {
   const {
     register,
@@ -34,6 +40,24 @@ function LoginForm({
             Sign in to manage products, orders, and shop analytics.
           </p>
         </div>
+
+        {isSupabaseConfigured() && onGoogleSignIn && (
+          <div className="space-y-4">
+            <GoogleSignInButton
+              onClick={onGoogleSignIn}
+              disabled={isPending}
+              isLoading={isGooglePending}
+            />
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">or continue with email</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">

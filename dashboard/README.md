@@ -1,68 +1,64 @@
 # Mini Shop — Admin Dashboard
 
-Professional web admin panel for the **Mini Shop** full-stack challenge. Store operators sign in here to monitor performance, manage the product catalogue, and fulfil customer orders placed from the mobile storefront.
+Professional web admin for the **Mini Shop** full-stack challenge. Store operators sign in here to monitor KPIs, manage the product catalogue, and fulfil orders from the mobile storefront.
 
-This app is **Part 3** of the Mini Shop task: React admin UI backed by a Fastify REST API and Supabase (PostgreSQL, Auth, Storage).
+Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **port 5001**.
 
 ---
 
 ## System context
 
-| Layer                          | Technology                                  | Local URL                      |
-| ------------------------------ | ------------------------------------------- | ------------------------------ |
-| **Admin dashboard** (this app) | React 19 · Vite · TypeScript · Tailwind CSS | http://localhost:**5000**      |
-| Backend API                    | Node.js · Fastify · TypeScript              | http://localhost:**5001**      |
-| Mobile app                     | Expo · React Native · TypeScript            | _(separate `/mobile` project)_ |
-| Data & auth                    | Supabase (PostgreSQL · Auth · Storage)      | Supabase cloud / local         |
+| Layer                          | Technology                                       | Local URL                 |
+| ------------------------------ | ------------------------------------------------ | ------------------------- |
+| **Admin dashboard** (this app) | React 19 · Vite 7 · TypeScript · Tailwind CSS v4 | http://localhost:**5000** |
+| Backend API                    | Fastify 5 · TypeScript · Bun                     | http://localhost:**5001** |
+| Mobile app _(planned)_         | Expo · React Native                              | —                         |
+| Data & auth                    | Supabase (PostgreSQL · Auth · Storage)           | Cloud project             |
 
 ```text
-┌─────────────┐     REST (JWT)      ┌─────────────┐     Supabase SDK     ┌──────────┐
+┌─────────────┐     REST + JWT      ┌─────────────┐     Supabase SDK     ┌──────────┐
 │   Mobile    │ ──────────────────► │   Fastify   │ ───────────────────► │ Supabase │
-│  (Expo)     │                     │   :5001     │                      │          │
+│   (Expo)    │                     │   :5001     │                      │          │
 └─────────────┘                     └──────▲──────┘                      └──────────┘
                                            │
-┌─────────────┐     REST (JWT)             │
+┌─────────────┐     REST + JWT             │
 │  Dashboard  │ ───────────────────────────┘
 │   :5000     │
 └─────────────┘
 ```
 
-**Local development does not use Docker.** Run the dashboard and API with [Bun](https://bun.sh) on your machine at the ports above.
-
 ---
 
-## Features (task scope)
+## Features (Mini Shop task — Part 3)
 
-Aligned with the Mini Shop specification — **Admin Web Dashboard**:
-
-| Area               | Capability                                                                 |
-| ------------------ | -------------------------------------------------------------------------- |
-| **Authentication** | Admin-only login (Supabase Auth via API); session token in secure cookie   |
-| **Dashboard**      | KPI cards: orders today, revenue, active products                          |
-| **Products**       | Table with create / edit / toggle active; image upload to Supabase Storage |
-| **Orders**         | Table with status filter; update status; order detail view                 |
-| **UX**             | Sidebar navigation; responsive desktop & tablet; skeletons & toasts        |
-| **Theme**          | Dark / light mode (implemented)                                            |
-| **Bonus**          | Live order updates via Supabase Realtime _(optional)_                      |
+| Area               | Capability                                                                    |
+| ------------------ | ----------------------------------------------------------------------------- |
+| **Authentication** | Admin-only email/password login via API; JWT in httpOnly-style cookie storage |
+| **Dashboard**      | KPI cards: orders today, revenue today, active products                       |
+| **Products**       | Table with create / edit / toggle active; image upload _(planned)_            |
+| **Orders**         | Status filter, update status, detail view _(planned)_                         |
+| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme         |
+| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files      |
 
 ### Implementation status
 
-| Feature                           | Status      |
-| --------------------------------- | ----------- |
-| App shell, layout, sidebar, theme | Done        |
-| Login UI & auth service wiring    | In progress |
-| Dashboard KPIs                    | Planned     |
-| Products CRUD                     | Planned     |
-| Orders management                 | Planned     |
-| Protected routes (admin gate)     | Planned     |
+| Feature                              | Status  |
+| ------------------------------------ | ------- |
+| App shell, sidebar, header, theme    | Done    |
+| Login UI + auth service + admin gate | Done    |
+| Protected routes                     | Done    |
+| Dashboard KPIs (`/dashboard/stats`)  | Done    |
+| Products CRUD pages                  | Planned |
+| Orders management pages              | Planned |
+| Google OAuth sign-in                 | Planned |
 
 ---
 
 ## Prerequisites
 
-- **Bun** 1.1+ ([install](https://bun.sh))
-- Backend API running on **port 5001** (`bun dev:backend` from repo root)
-- Supabase project configured on the backend _(when API auth is enabled)_
+- [Bun](https://bun.sh) 1.1+
+- Backend running on **http://localhost:5001**
+- Supabase configured on the backend (migrations + seed)
 
 ---
 
@@ -75,7 +71,11 @@ bun install
 bun dev
 ```
 
-This starts the dashboard on **http://localhost:5000** and the API on **http://localhost:5001**.
+| URL                          | Service         |
+| ---------------------------- | --------------- |
+| http://localhost:5000        | Admin dashboard |
+| http://localhost:5001        | Backend API     |
+| http://localhost:5001/health | Health check    |
 
 Dashboard only:
 
@@ -83,41 +83,43 @@ Dashboard only:
 bun dev:dashboard
 ```
 
-| URL                          | Description      |
-| ---------------------------- | ---------------- |
-| http://localhost:5000        | Admin dashboard  |
-| http://localhost:5001        | Backend API      |
-| http://localhost:5001/health | API health check |
+### Test admin login
+
+After `bun --cwd backend run seed`:
+
+| Field    | Value                 |
+| -------- | --------------------- |
+| Email    | `admin@minishop.test` |
+| Password | `Admin12345!`         |
 
 ---
 
 ## Environment
 
-Defaults are built in — no `.env` file is required for local development.
-
 | Variable            | Default                 | Purpose              |
 | ------------------- | ----------------------- | -------------------- |
 | `VITE_API_BASE_URL` | `http://localhost:5001` | Fastify API base URL |
 
-To override, create **`dashboard/.env.development`** (gitignored):
+Create **`dashboard/.env.development`** to override:
 
 ```bash
 VITE_API_BASE_URL=http://localhost:5001
 ```
 
-See [`.env.example`](.env.example) for a template.
+Template: [`.env.example`](.env.example).
 
 ---
 
 ## Scripts
 
 ```bash
-bun dev          # Dev server on port 5000 (strict — fails if port is in use)
+bun dev          # Vite dev server — port 5000 (strictPort)
 bun build        # Typecheck + production build
-bun preview      # Preview production build on port 5000
-bun test         # Vitest unit tests
-bun run lint     # ESLint (from monorepo root: bun lint)
+bun preview      # Preview build on port 5000
+bun test         # Vitest
 ```
+
+From monorepo root: `bun lint`, `bun test`, `bun run build`.
 
 ---
 
@@ -126,86 +128,54 @@ bun run lint     # ESLint (from monorepo root: bun lint)
 ```text
 dashboard/
 ├── src/
-│   ├── features/          # Domain modules
-│   │   ├── auth/          # Login, hooks, authService
-│   │   └── dashboard/     # KPI home
+│   ├── features/
+│   │   ├── auth/           # Login, hooks, authService
+│   │   └── dashboard/      # KPI page, stats service
 │   ├── shared/
-│   │   ├── components/    # Atoms, molecules, organisms, templates
-│   │   ├── config/        # API endpoints (api.ts)
-│   │   ├── hooks/         # useApi, useTheme, …
-│   │   ├── lib/           # apiResponse helpers
-│   │   ├── services/      # apiClient, errorHandler
-│   │   └── types/         # API contracts
-│   └── router/            # AppRoutes, layouts
-├── index.html
-└── vite.config.ts         # Port 5000, @ alias
+│   │   ├── components/     # Design system (atoms → templates)
+│   │   ├── config/api.ts   # Endpoints aligned with backend
+│   │   └── services/       # apiClient, errorHandler
+│   └── router/AppRoutes.tsx
+├── index.html              # Inline SVG favicon (no logo.png)
+└── vite.config.ts          # port 5000, strictPort
 ```
-
-**Conventions**
-
-- **`src/features`** — pages, hooks, and services owned by a domain
-- **`src/shared`** — reusable UI, API client, utilities
-- **`src/router`** — route definitions and layout wiring
-- Branding uses the in-app **`Logo`** component (Lucide icon + wordmark), not static image assets
 
 ---
 
 ## API integration
 
-The dashboard calls the backend using paths defined in `src/shared/config/api.ts`:
+Configured in `src/shared/config/api.ts`:
 
-- **Auth:** `/auth/login`, `/auth/register`, `/auth/forgot-password`, `/auth/me`
-- **Products:** CRUD under `/products`
-- **Orders:** `/orders`, `/orders/my`, `/orders/:id/status`
-- **Stats:** `/dashboard/stats`
+- **Auth:** `/auth/login`, `/auth/me`
+- **Dashboard:** `/dashboard/stats`
+- **Products / orders:** wired when pages are added
 
-Success responses: `{ success: true, data?: T }`.  
-Errors: `{ statusCode, error, message }`.
+Responses: success `{ success, data }` · errors `{ statusCode, error, message }`.
 
 ---
 
 ## Design system
 
-- **Typography:** Poppins (`src/index.css`)
-- **Styling:** Tailwind CSS v4 with semantic tokens (`primary`, `sidebar`, `destructive`, …)
-- **Components:** Radix primitives + shared atoms in `src/shared/components`
-- **Icons:** [Lucide React](https://lucide.dev) — including the storefront mark in `Logo.tsx`
-
----
-
-## Quality & tooling
-
-From the monorepo root:
-
-```bash
-bun lint
-bun format:check
-bun test
-```
-
-Husky runs lint-staged on commit.
+- **Font:** Poppins
+- **UI:** Tailwind v4 semantic tokens, Radix primitives, Lucide icons
+- **Logo:** `src/shared/components/atoms/Logo.tsx` (icon + wordmark)
 
 ---
 
 ## Production build
 
 ```bash
-# From repo root
 VITE_API_BASE_URL=https://api.your-domain.com bun run build:dashboard
-bun --cwd dashboard preview   # Serves on port 5000
+bun --cwd dashboard preview
 ```
 
-Set `VITE_API_BASE_URL` to your deployed Fastify API before building.
+---
+
+## Related docs
+
+- [Root README](../README.md) — monorepo, ports, no-Docker workflow
+- [Backend README](../backend/README.md) — API, Supabase, seed data
 
 ---
 
-## Related documentation
-
-- [Root README](../README.md) — monorepo setup, ports, no-Docker workflow
-- [Backend README](../backend/README.md) — API service and Supabase configuration
-
----
-
-## Task reference
-
-Built for the **Mini Shop** full-stack developer challenge (mobile app · REST API · admin dashboard · Supabase). Evaluation areas: functionality, code quality, UI/UX, security, and optional realtime order updates on mobile.
+Built for the **Mini Shop** developer challenge: mobile storefront, REST API, admin dashboard, Supabase.
