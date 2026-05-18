@@ -1,61 +1,33 @@
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { Tabs } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { theme } from "@/theme/theme";
-
-function TabIcon(props: { name: React.ComponentProps<typeof FontAwesome>["name"]; color: string }) {
-  return <FontAwesome size={22} style={{ marginBottom: -2 }} {...props} />;
-}
+import { getTabBarInset, TabBar } from "@/ui/TabBar";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const tabBarHeight = 56 + insets.bottom;
+  const tabBarInset = getTabBarInset(insets.bottom);
 
   return (
     <Tabs
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: theme.colors.surface,
-          borderTopColor: theme.colors.border,
-          borderTopWidth: 1,
-          height: tabBarHeight,
-          paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 8),
+        sceneStyle: {
+          paddingBottom: tabBarInset,
         },
-        tabBarActiveTintColor: theme.colors.primary2,
-        tabBarInactiveTintColor: theme.colors.muted,
+        tabBarStyle: {
+          position: "absolute",
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
+          elevation: 0,
+          height: 0,
+        },
       }}
     >
-      <Tabs.Screen
-        name="shop"
-        options={{
-          title: "Shop",
-          tabBarIcon: ({ color }) => <TabIcon name="shopping-bag" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: "Cart",
-          tabBarIcon: ({ color }) => <TabIcon name="shopping-cart" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: "Orders",
-          tabBarIcon: ({ color }) => <TabIcon name="list-alt" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => <TabIcon name="user" color={color} />,
-        }}
-      />
+      <Tabs.Screen name="shop" options={{ title: "Shop" }} />
+      <Tabs.Screen name="cart" options={{ title: "Cart" }} />
+      <Tabs.Screen name="orders" options={{ title: "Orders" }} />
+      <Tabs.Screen name="profile" options={{ title: "Profile" }} />
     </Tabs>
   );
 }
