@@ -1,12 +1,21 @@
+import { useEffect } from "react";
 import logger from "@/shared/utils/logger";
 import { useNavigate } from "react-router-dom";
 import { handleApiError, showSuccess } from "@/shared/services/errorHandler";
+import { FullScreenLoader } from "@/shared/components/molecules/FullScreenLoader";
 import { LoginTemplate, AuthService, type LoginFormData } from "..";
-import { useLogin } from "../hooks/useAuth";
+import { useLogin, useSetupStatus } from "../hooks/useAuth";
 
 function LoginPage() {
   const navigate = useNavigate();
   const loginMutation = useLogin();
+  const { data: setupStatus, isLoading: isSetupLoading } = useSetupStatus();
+
+  useEffect(() => {
+    if (!isSetupLoading && setupStatus?.needsSetup) {
+      navigate("/setup", { replace: true });
+    }
+  }, [isSetupLoading, setupStatus, navigate]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
@@ -32,6 +41,10 @@ function LoginPage() {
       });
     }
   };
+
+  if (isSetupLoading || setupStatus?.needsSetup) {
+    return <FullScreenLoader message="Loading…" />;
+  }
 
   return (
     <div>

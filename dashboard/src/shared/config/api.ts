@@ -11,6 +11,8 @@ export const API_CONFIG = {
       REGISTER: "/auth/register",
       FORGOT_PASSWORD: "/auth/forgot-password",
       ME: "/auth/me",
+      SETUP_STATUS: "/auth/setup/status",
+      SETUP: "/auth/setup",
     },
 
     PRODUCTS: {

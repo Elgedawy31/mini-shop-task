@@ -71,13 +71,15 @@ Also seeds **3 categories** and **11 products**.
 
 ### Auth
 
-| Method | Route                   | Access     |
-| ------ | ----------------------- | ---------- |
-| POST   | `/auth/register`        | Public     |
-| POST   | `/auth/login`           | Public     |
-| POST   | `/auth/forgot-password` | Public     |
-| GET    | `/auth/me`              | Bearer JWT |
-| PATCH  | `/auth/me`              | Bearer JWT |
+| Method | Route                   | Access                                           |
+| ------ | ----------------------- | ------------------------------------------------ |
+| POST   | `/auth/register`        | Public                                           |
+| POST   | `/auth/login`           | Public                                           |
+| POST   | `/auth/forgot-password` | Public                                           |
+| GET    | `/auth/setup/status`    | Public — `{ needsSetup }` when no admin exists   |
+| POST   | `/auth/setup`           | Public — create first admin (only if none exist) |
+| GET    | `/auth/me`              | Bearer JWT                                       |
+| PATCH  | `/auth/me`              | Bearer JWT                                       |
 
 ### Products
 

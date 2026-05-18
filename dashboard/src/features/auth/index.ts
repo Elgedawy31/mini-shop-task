@@ -12,11 +12,19 @@ export {
 } from "./services/authService";
 
 // Auth Hooks
-export { useAuth, useLogin, useRegister, authUtils } from "./hooks/useAuth";
+export {
+  useAuth,
+  useLogin,
+  useRegister,
+  useSetupStatus,
+  useSetupAdmin,
+  authUtils,
+} from "./hooks/useAuth";
 
 // Auth Types
 export type {
   LoginFormData,
+  SetupAdminFormData,
   RegisterFormData,
   RegisterRequestData,
   AuthState,
@@ -24,7 +32,7 @@ export type {
   AuthAction,
 } from "./types/AuthForm";
 
-export { loginSchema, registerSchema } from "./types/AuthForm";
+export { loginSchema, setupAdminSchema, registerSchema } from "./types/AuthForm";
 
 export type {
   User as AuthServiceUser,
@@ -39,3 +47,4 @@ export type {
 export { default as LoginPage } from "./pages/LoginPage";
 export { default as LoginTemplate } from "./components/LoginTemplate";
 export { default as LoginForm } from "./components/LoginForm";
+export { default as SetupPage } from "./pages/SetupPage";

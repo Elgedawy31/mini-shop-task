@@ -18,6 +18,16 @@ export interface RegisterRequest {
   name?: string;
 }
 
+export interface SetupAdminRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export type SetupStatus = {
+  needsSetup: boolean;
+};
+
 export interface AuthResult {
   success: boolean;
   user?: User;
@@ -75,6 +85,39 @@ function toAuthResult(raw: ApiResponse<AuthPayload> & Record<string, unknown>): 
 }
 
 export class AuthService {
+  static async fetchSetupStatus(): Promise<SetupStatus> {
+    const response = await apiClient.get<SetupStatus>(API_CONFIG.ENDPOINTS.AUTH.SETUP_STATUS);
+    const unwrapped = unwrapResponse<SetupStatus>(
+      response as ApiResponse<SetupStatus> & Record<string, unknown>
+    );
+
+    if (!unwrapped.success) {
+      throw new Error(unwrapped.error ?? unwrapped.message ?? "Could not check setup status");
+    }
+
+    const payload = unwrapped.data as SetupStatus | undefined;
+    const needsSetup =
+      payload?.needsSetup ?? (unwrapped as unknown as SetupStatus).needsSetup ?? false;
+
+    return { needsSetup: Boolean(needsSetup) };
+  }
+
+  static async setupFirstAdmin(payload: SetupAdminRequest): Promise<AuthResult> {
+    const response = await apiClient.post<AuthPayload>(API_CONFIG.ENDPOINTS.AUTH.SETUP, payload);
+    const result = toAuthResult(response as ApiResponse<AuthPayload> & Record<string, unknown>);
+
+    if (result.success && result.token) {
+      this.setAuthToken(result.token);
+      if (result.user) this.setUserData(result.user);
+    }
+
+    if (!result.success) {
+      logger.error("Setup failed:", result.error ?? result.message);
+    }
+
+    return result;
+  }
+
   static async login(credentials: LoginRequest): Promise<AuthResult> {
     const response = await apiClient.post<AuthPayload>(
       API_CONFIG.ENDPOINTS.AUTH.LOGIN,

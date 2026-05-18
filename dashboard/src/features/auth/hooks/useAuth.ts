@@ -7,12 +7,50 @@ import {
   type LoginFormData,
   type RegisterFormData,
   type RegisterRequestData,
+  type SetupAdminFormData,
 } from "..";
 // Query keys for consistent cache management
 export const AUTH_QUERY_KEYS = {
   all: ["auth"] as const,
   user: () => [...AUTH_QUERY_KEYS.all, "user"] as const,
+  setupStatus: () => [...AUTH_QUERY_KEYS.all, "setup-status"] as const,
 } as const;
+
+export const useSetupStatus = (options?: { enabled?: boolean }) => {
+  return useQuery({
+    queryKey: AUTH_QUERY_KEYS.setupStatus(),
+    queryFn: () => AuthService.fetchSetupStatus(),
+    enabled: options?.enabled ?? true,
+    staleTime: 30_000,
+    retry: 1,
+  });
+};
+
+export const useSetupAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (formData: SetupAdminFormData) => {
+      const response = await AuthService.setupFirstAdmin({
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        password: formData.password,
+      });
+
+      if (!response.success) {
+        throw new Error(response.error ?? response.message ?? "Setup failed");
+      }
+
+      return response;
+    },
+    onSuccess: (data) => {
+      if (data?.user) {
+        queryClient.setQueryData(AUTH_QUERY_KEYS.user(), data.user);
+      }
+      queryClient.setQueryData(AUTH_QUERY_KEYS.setupStatus(), { needsSetup: false });
+    },
+  });
+};
 
 /**
  * Hook for user verification query - validates token and gets fresh user data

@@ -31,20 +31,21 @@ Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **
 
 ## Features (Mini Shop task — Part 3)
 
-| Area               | Capability                                                               |
-| ------------------ | ------------------------------------------------------------------------ |
-| **Authentication** | Admin-only email/password login via Fastify API; JWT stored in cookie    |
-| **Dashboard**      | KPI cards: orders today, revenue today, active products                  |
-| **Products**       | Table with create / edit / toggle active; image upload _(planned)_       |
-| **Orders**         | Status filter, update status, detail view _(planned)_                    |
-| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme    |
-| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files |
+| Area               | Capability                                                                            |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| **Authentication** | First-run admin setup (Payload-style) when no admins exist; then email/password login |
+| **Dashboard**      | KPI cards: orders today, revenue today, active products                               |
+| **Products**       | Table with create / edit / toggle active; image upload _(planned)_                    |
+| **Orders**         | Status filter, update status, detail view _(planned)_                                 |
+| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme                 |
+| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files              |
 
 ### Implementation status
 
 | Feature                              | Status  |
 | ------------------------------------ | ------- |
 | App shell, sidebar, header, theme    | Done    |
+| First admin setup (`/setup`) + login | Done    |
 | Login UI + auth service + admin gate | Done    |
 | Protected routes                     | Done    |
 | Dashboard KPIs (`/dashboard/stats`)  | Done    |
@@ -82,9 +83,13 @@ Dashboard only:
 bun dev:dashboard
 ```
 
-### Test admin login
+### First admin (fresh database)
 
-After `bun --cwd backend run seed`:
+When no admin exists in `profiles`, open **http://localhost:5000/setup** and create the store owner account (name, email, password). The API only allows this once; afterward everyone signs in at `/sign-in`.
+
+### Test admin login (seeded database)
+
+After `bun --cwd backend run seed`, setup is skipped and you sign in directly:
 
 | Field    | Value                 |
 | -------- | --------------------- |
@@ -145,7 +150,7 @@ dashboard/
 
 Configured in `src/shared/config/api.ts`:
 
-- **Auth:** `/auth/login`, `/auth/me`
+- **Auth:** `/auth/setup/status`, `/auth/setup`, `/auth/login`, `/auth/me`
 - **Dashboard:** `/dashboard/stats`
 - **Products / orders:** wired when pages are added
 

@@ -6,11 +6,26 @@ import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  setupAdminSchema,
   updateProfileSchema,
 } from "../schemas/auth.schema.js";
 import * as authService from "../services/auth.service.js";
 
 export async function authRoutes(app: FastifyInstance) {
+  app.get("/auth/setup/status", async (_request, reply) => {
+    const status = await authService.getSetupStatus();
+    sendSuccess(reply, status);
+  });
+
+  app.post("/auth/setup", async (request, reply) => {
+    const body = parseBody(setupAdminSchema, request.body);
+    const session = await authService.setupFirstAdmin(body);
+    sendSuccess(reply, session, {
+      statusCode: 201,
+      message: "Admin account created. Welcome to Mini Shop.",
+    });
+  });
+
   app.post("/auth/register", async (request, reply) => {
     const body = parseBody(registerSchema, request.body);
     const session = await authService.register(body);

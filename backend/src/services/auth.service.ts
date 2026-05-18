@@ -4,6 +4,7 @@ import type {
   ForgotPasswordInput,
   LoginInput,
   RegisterInput,
+  SetupAdminInput,
   UpdateProfileInput,
 } from "../schemas/auth.schema.js";
 import type { AuthUser } from "../types/domain.js";
@@ -119,6 +120,77 @@ export async function login(input: LoginInput): Promise<AuthSessionPayload> {
     data.session.expires_in,
     user
   );
+}
+
+async function countAdminProfiles(): Promise<number> {
+  const supabase = createServiceClient();
+  const { count, error } = await supabase
+    .from("profiles")
+    .select("id", { count: "exact", head: true })
+    .eq("role", "admin");
+
+  if (error) {
+    throw new AppError({
+      code: "setup_status_failed",
+      message: error.message,
+      statusCode: 500,
+    });
+  }
+
+  return count ?? 0;
+}
+
+export async function getSetupStatus(): Promise<{ needsSetup: boolean }> {
+  const adminCount = await countAdminProfiles();
+  return { needsSetup: adminCount === 0 };
+}
+
+export async function setupFirstAdmin(input: SetupAdminInput): Promise<AuthSessionPayload> {
+  const adminCount = await countAdminProfiles();
+
+  if (adminCount > 0) {
+    throw new AppError({
+      code: "setup_not_allowed",
+      message: "An admin account already exists. Sign in instead.",
+      statusCode: 403,
+    });
+  }
+
+  const service = createServiceClient();
+
+  const { data: created, error: createError } = await service.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: { name: input.name },
+  });
+
+  if (createError || !created.user) {
+    throw new AppError({
+      code: "setup_failed",
+      message: createError?.message ?? "Could not create admin account",
+      statusCode: 400,
+    });
+  }
+
+  const { error: profileError } = await service.from("profiles").upsert(
+    {
+      id: created.user.id,
+      name: input.name,
+      role: "admin",
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    throw new AppError({
+      code: "setup_failed",
+      message: profileError.message,
+      statusCode: 500,
+    });
+  }
+
+  return login({ email: input.email, password: input.password });
 }
 
 export async function forgotPassword(input: ForgotPasswordInput): Promise<void> {

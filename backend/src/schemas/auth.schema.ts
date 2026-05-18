@@ -21,7 +21,11 @@ export const updateProfileSchema = z.object({
   password: z.string().min(8).max(128).optional(),
 });
 
+/** First admin bootstrap — same fields as register */
+export const setupAdminSchema = registerSchema;
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type SetupAdminInput = z.infer<typeof setupAdminSchema>;
