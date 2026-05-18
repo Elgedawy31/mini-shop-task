@@ -67,10 +67,18 @@ function ProductsPage() {
     : 1;
 
   const handleSaveProduct = async (payload: ProductPayload, imageFile?: File) => {
+    const hasFieldChanges = Object.keys(payload).length > 0;
+
+    if (editingProduct && !imageFile && !hasFieldChanges) {
+      setIsDialogOpen(false);
+      setEditingProduct(null);
+      return;
+    }
+
     const imageResponse = imageFile ? await uploadMutation.mutateAsync(imageFile) : null;
     const finalPayload = {
       ...payload,
-      imageUrl: imageResponse?.imageUrl ?? editingProduct?.imageUrl ?? payload.imageUrl ?? null,
+      ...(imageResponse ? { imageUrl: imageResponse.imageUrl } : {}),
     };
 
     if (editingProduct) {

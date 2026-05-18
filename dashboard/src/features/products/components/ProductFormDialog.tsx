@@ -49,6 +49,37 @@ function toFormState(product?: Product | null): ProductFormState {
   };
 }
 
+function buildProductPayload(
+  form: ProductFormState,
+  initialProduct?: Product | null
+): ProductPayload {
+  const normalizedName = form.name.trim();
+  const normalizedDescription = form.description.trim();
+  const normalizedPrice = Number(form.price);
+  const normalizedCategoryId = form.categoryId === "none" ? null : form.categoryId;
+
+  if (!initialProduct) {
+    return {
+      name: normalizedName,
+      description: normalizedDescription,
+      price: normalizedPrice,
+      categoryId: normalizedCategoryId,
+      isActive: form.isActive,
+    };
+  }
+
+  const payload: ProductPayload = {};
+
+  if (normalizedName !== initialProduct.name) payload.name = normalizedName;
+  if (normalizedDescription !== initialProduct.description)
+    payload.description = normalizedDescription;
+  if (normalizedPrice !== initialProduct.price) payload.price = normalizedPrice;
+  if (normalizedCategoryId !== initialProduct.categoryId) payload.categoryId = normalizedCategoryId;
+  if (form.isActive !== initialProduct.isActive) payload.isActive = form.isActive;
+
+  return payload;
+}
+
 export function ProductFormDialog({
   open,
   onOpenChange,
@@ -68,13 +99,7 @@ export function ProductFormDialog({
   }, [initialProduct, open]);
 
   const handleSubmit = async () => {
-    const payload: ProductPayload = {
-      name: form.name.trim(),
-      description: form.description.trim(),
-      price: Number(form.price),
-      categoryId: form.categoryId === "none" ? null : form.categoryId,
-      isActive: form.isActive,
-    };
+    const payload = buildProductPayload(form, initialProduct);
 
     await onSubmit(payload, selectedFiles[0]);
   };
@@ -206,7 +231,7 @@ export function ProductFormDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="pt-4 sm:pt-6">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>

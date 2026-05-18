@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Button } from "../atoms/button";
 import { Card } from "../atoms/card";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { CheckCircle2, Image as ImageIcon, Sparkles, Upload, X } from "lucide-react";
 import { cn } from "../../utils/cn";
 import { validateFiles, generatePreviewUrl, revokePreviewUrl } from "../../services/fileValidation";
 import { formatBytes } from "@/shared/utils/helper";
@@ -112,55 +112,106 @@ export function ImageUpload({
     };
   }, []);
 
+  const isSingleImageMode = maxFiles === 1;
+  const hasImage = imageFiles.length > 0;
+
   return (
     <div className={cn("space-y-4", className)}>
       {/* Upload Area */}
       <Card
         {...getRootProps()}
         className={cn(
-          "border-2 border-dashed transition-colors cursor-pointer",
-          "hover:border-primary/50 hover:bg-accent/50",
-          isDragActive && "border-primary bg-primary/5",
+          "group overflow-hidden border-2 border-dashed transition-all duration-200 cursor-pointer",
+          "hover:border-primary/50 hover:bg-accent/40 hover:shadow-lg hover:shadow-primary/5",
+          isDragActive && "border-primary bg-primary/5 shadow-lg shadow-primary/10",
           disabled && "cursor-not-allowed opacity-50",
+          hasImage && isSingleImageMode && "border-border bg-card",
           "dark:hover:border-primary/50 dark:hover:bg-accent/50",
           isDragActive && "dark:border-primary dark:bg-primary/5"
         )}
       >
-        <div className="p-8 text-center">
+        <div className="p-6 sm:p-8 text-center">
           <input {...getInputProps()} />
           <div className="flex flex-col items-center gap-4">
-            <div
-              className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center",
-                "bg-muted dark:bg-muted"
-              )}
-            >
-              <Upload className="w-6 h-6 text-muted-foreground" />
-            </div>
+            {hasImage && isSingleImageMode ? (
+              <div className="w-full max-w-md">
+                <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-muted/20">
+                  <img
+                    src={imageFiles[0].preview}
+                    alt="Selected product preview"
+                    className="h-56 w-full object-cover"
+                  />
+                  {!hasPrimaryPhoto && (
+                    <div className="absolute right-3 top-3">
+                      <span className="inline-flex rounded-full bg-background/85 px-2.5 py-1 text-[11px] font-medium text-foreground shadow-sm backdrop-blur-md">
+                        Primary image
+                      </span>
+                    </div>
+                  )}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/72 via-black/38 to-transparent p-4 text-left text-white">
+                    <div className="mb-2">
+                      <span className="inline-flex items-center gap-1 rounded-full border border-white/15 bg-black/30 px-2.5 py-1 text-[11px] font-medium text-white/90 backdrop-blur-md">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Ready
+                      </span>
+                    </div>
+                    <p className="truncate text-sm font-semibold">{imageFiles[0].file.name}</p>
+                    <p className="mt-1 text-xs text-white/80">
+                      {formatBytes(imageFiles[0].file.size)} • Click or drop to replace
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div
+                  className={cn(
+                    "flex h-16 w-16 items-center justify-center rounded-2xl border border-border/60 bg-muted/50 transition-transform duration-200",
+                    "group-hover:scale-105 group-hover:border-primary/30 group-hover:bg-primary/5"
+                  )}
+                >
+                  <Upload className="h-7 w-7 text-muted-foreground" />
+                </div>
 
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                {isDragActive ? "Drop images here" : "Drop your images here or Browse"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Supports:{" "}
-                {API_CONFIG.UPLOAD.ALLOWED_EXTENSIONS.map((ex) => ex.slice(1).toUpperCase()).join(
-                  ", "
-                )}{" "}
-                (Max {maxFiles} files, {formatBytes(API_CONFIG.UPLOAD.MAX_FILE_SIZE)} each)
-              </p>
-            </div>
+                <div className="max-w-sm space-y-2">
+                  <div className="flex items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Product media
+                  </div>
+                  <p className="text-base font-semibold leading-snug text-foreground">
+                    {isDragActive
+                      ? "Drop the product image here"
+                      : isSingleImageMode
+                        ? "Upload a clean product cover"
+                        : "Upload polished product gallery images"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {isSingleImageMode
+                      ? "Use a sharp hero image with strong lighting and minimal background distractions."
+                      : "Choose clear, high-quality images that make the catalogue feel premium."}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Supports{" "}
+                    {API_CONFIG.UPLOAD.ALLOWED_EXTENSIONS.map((ex) =>
+                      ex.slice(1).toUpperCase()
+                    ).join(", ")}{" "}
+                    • Max {maxFiles} file{maxFiles > 1 ? "s" : ""} •{" "}
+                    {formatBytes(API_CONFIG.UPLOAD.MAX_FILE_SIZE)} each
+                  </p>
+                </div>
 
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={disabled}
-              className="pointer-events-none"
-            >
-              <ImageIcon className="w-4 h-4 mr-2" />
-              Choose Images
-            </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={disabled}
+                  className="pointer-events-none rounded-xl px-4"
+                >
+                  <ImageIcon className="w-4 h-4 mr-2" />
+                  {isSingleImageMode ? "Choose product image" : "Choose images"}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </Card>
@@ -177,7 +228,7 @@ export function ImageUpload({
       )}
 
       {/* Image Previews */}
-      {imageFiles.length > 0 && (
+      {imageFiles.length > 0 && !isSingleImageMode && (
         <div className="space-y-3">
           <h4 className="text-sm font-medium text-foreground">
             Selected Images ({imageFiles.length}/{maxFiles})
