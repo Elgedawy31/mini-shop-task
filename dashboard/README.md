@@ -11,7 +11,7 @@ bun preview
 bun test
 ```
 
-The dashboard runs on http://localhost:5000 and expects the API at http://localhost:5001 (set `VITE_API_BASE_URL` when running outside Docker).
+Runs on http://localhost:5000 and talks to the API at http://localhost:5001.
 
 ## Structure
 
@@ -19,4 +19,4 @@ The dashboard runs on http://localhost:5000 and expects the API at http://localh
 - `src/shared` - reusable UI, hooks, services, and utilities.
 - `src/router` - route composition.
 
-Project-level linting, formatting, Husky, and Docker Compose live in the repository root.
+Project-level linting, formatting, and Husky live in the repository root.

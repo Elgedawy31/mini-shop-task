@@ -1,7 +1,7 @@
 // API Configuration - Centralized configuration for all API integrations
 export const API_CONFIG = {
   // Base configuration
-  BASE_URL: import.meta.env.VITE_API_BASE_URL || "http://listings.devglobal.io",
+  BASE_URL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5001",
   TIMEOUT: 30000, // 30 seconds
 
   // Authentication

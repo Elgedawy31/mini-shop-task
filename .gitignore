@@ -8,10 +8,13 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Environment
+# Environment (never commit — local secrets and overrides)
 .env
 .env.*
-!.env.example
+.env.local
+.env.*.local
+dashboard/.env.development
+dashboard/.env.production
 
 # Logs
 *.log
