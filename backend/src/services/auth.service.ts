@@ -55,46 +55,148 @@ function mapSession(
   };
 }
 
-export async function register(input: RegisterInput): Promise<AuthSessionPayload> {
-  const supabase = createAnonClient();
+function mapRegistrationError(message: string): AppError {
+  const lower = message.toLowerCase();
 
-  const { data, error } = await supabase.auth.signUp({
+  if (lower.includes("rate limit")) {
+    return new AppError({
+      code: "registration_rate_limited",
+      message: "Too many sign-up attempts. Please wait a few minutes and try again.",
+      statusCode: 429,
+    });
+  }
+
+  if (
+    lower.includes("already registered") ||
+    lower.includes("already been registered") ||
+    lower.includes("already exists") ||
+    lower.includes("duplicate") ||
+    (lower.includes("already") && lower.includes("registered"))
+  ) {
+    return new AppError({
+      code: "email_already_registered",
+      message: "An account with this email already exists. Sign in with your password instead.",
+      statusCode: 409,
+    });
+  }
+
+  if (lower.includes("invalid") && lower.includes("email")) {
+    return new AppError({
+      code: "invalid_email",
+      message:
+        "This email could not be used. If you already registered, try signing in or use forgot password.",
+      statusCode: 400,
+    });
+  }
+
+  return new AppError({
+    code: "registration_failed",
+    message,
+    statusCode: 400,
+  });
+}
+
+async function findAuthUserByEmail(email: string) {
+  const service = createServiceClient();
+  const normalized = email.trim().toLowerCase();
+
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await service.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) {
+      throw new AppError({
+        code: "registration_failed",
+        message: error.message,
+        statusCode: 500,
+      });
+    }
+
+    const match = data.users.find((user) => user.email?.toLowerCase() === normalized);
+    if (match) return match;
+
+    if (data.users.length < 200) break;
+  }
+
+  return null;
+}
+
+/** Mobile-friendly registration: confirmed user + immediate session (no email confirmation step). */
+export async function register(input: RegisterInput): Promise<AuthSessionPayload> {
+  const service = createServiceClient();
+
+  const { data: created, error: createError } = await service.auth.admin.createUser({
     email: input.email,
     password: input.password,
-    options: {
-      data: { name: input.name },
-    },
+    email_confirm: true,
+    user_metadata: { name: input.name },
   });
 
-  if (error) {
+  if (createError) {
+    const msg = createError.message ?? "Registration failed";
+    const lower = msg.toLowerCase();
+
+    if (lower.includes("already") && lower.includes("registered")) {
+      try {
+        return await login(input);
+      } catch {
+        const existing = await findAuthUserByEmail(input.email);
+
+        // Finish accounts stuck from the old email-confirmation signup flow.
+        if (existing && !existing.email_confirmed_at) {
+          const { error: updateError } = await service.auth.admin.updateUserById(existing.id, {
+            password: input.password,
+            email_confirm: true,
+            user_metadata: { name: input.name },
+          });
+
+          if (!updateError) {
+            await service
+              .from("profiles")
+              .upsert(
+                { id: existing.id, name: input.name, role: "customer" },
+                { onConflict: "id" }
+              );
+            return login(input);
+          }
+        }
+
+        throw new AppError({
+          code: "email_already_registered",
+          message:
+            "This email is already registered. Sign in with your existing password, or use Forgot password.",
+          statusCode: 409,
+        });
+      }
+    }
+
+    throw mapRegistrationError(msg);
+  }
+
+  if (!created.user) {
     throw new AppError({
       code: "registration_failed",
-      message: error.message,
+      message: "Could not create account",
       statusCode: 400,
     });
   }
 
-  if (!data.user || !data.session) {
-    throw new AppError({
-      code: "registration_failed",
-      message: "Registration requires email confirmation or could not create session",
-      statusCode: 400,
-    });
-  }
-
-  const service = createServiceClient();
-  await service
-    .from("profiles")
-    .upsert({ id: data.user.id, name: input.name, role: "customer" }, { onConflict: "id" });
-
-  const user = await loadProfile(data.user.id, data.user.email ?? input.email);
-
-  return mapSession(
-    data.session.access_token,
-    data.session.refresh_token,
-    data.session.expires_in,
-    user
+  const { error: profileError } = await service.from("profiles").upsert(
+    {
+      id: created.user.id,
+      name: input.name,
+      role: "customer",
+    },
+    { onConflict: "id" }
   );
+
+  if (profileError) {
+    throw new AppError({
+      code: "registration_failed",
+      message: profileError.message,
+      statusCode: 500,
+    });
+  }
+
+  return login({ email: input.email, password: input.password });
 }
 
 export async function login(input: LoginInput): Promise<AuthSessionPayload> {

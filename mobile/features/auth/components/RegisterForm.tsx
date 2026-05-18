@@ -33,6 +33,17 @@ export function RegisterForm() {
     });
 
     if (!res.success) {
+      const alreadyExists =
+        res.error === "email_already_registered" ||
+        res.statusCode === 409 ||
+        res.message.toLowerCase().includes("already");
+
+      if (alreadyExists) {
+        toast("info", "Account already exists", res.message);
+        router.replace("/(auth)/sign-in");
+        return;
+      }
+
       toast("error", "Registration failed", res.message);
       return;
     }

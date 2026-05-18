@@ -14,12 +14,23 @@ function parseError<T>(error: unknown): ApiResponse<T> {
 
   const axiosError = error as AxiosError<any>;
   const data = axiosError.response?.data;
-  if (data && typeof data === "object" && data.success === false) {
-    return toFailure<T>(data.message ?? "Request failed", {
-      error: data.error,
-      statusCode: data.statusCode,
-      errors: data.errors,
-    });
+
+  if (data && typeof data === "object") {
+    const body = data as {
+      success?: boolean;
+      message?: string;
+      error?: string;
+      statusCode?: number;
+      errors?: string[];
+    };
+
+    if (body.success === false || body.message) {
+      return toFailure<T>(body.message ?? "Request failed", {
+        error: body.error,
+        statusCode: body.statusCode ?? axiosError.response?.status,
+        errors: body.errors,
+      });
+    }
   }
 
   if (axiosError.response) {
