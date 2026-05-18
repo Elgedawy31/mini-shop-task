@@ -2,7 +2,13 @@ import { useMemo } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import Animated from "react-native-reanimated";
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from "react-native-reanimated";
 
 import { useAppTheme } from "@/theme/ThemeContext";
 import { mutedSurfaceFill, productCardImageGradient, skeletonLineFill } from "@/theme/surfaces";
@@ -12,26 +18,25 @@ import { AppText } from "@/ui/Primitives";
 import { AnimatedPressable } from "@/ui/form/AnimatedPressable";
 import { useFadeInUp } from "@/ui/shop/useFadeInUp";
 
-export type ProductCardSize = "large" | "compact";
+export type ProductCardSize = "featured" | "standard" | "compact";
 
 const SIZES = {
-  large: { image: 204, body: 92 },
-  compact: { image: 118, body: 74 },
+  featured: { image: 252, body: 104, radius: theme.radii.xl + 4 },
+  standard: { image: 172, body: 82, radius: theme.radii.xl },
+  compact: { image: 108, body: 68, radius: theme.radii.lg },
 } as const;
 
-/** Inner bottom inset so the View row is not flush with the card edge (compact only). */
-const COMPACT_BODY_PADDING_BOTTOM = theme.space[4];
-
-function cardVariantForIndex(index: number): ProductCardSize {
-  const row = Math.floor(index / 2);
-  const col = index % 2;
-  const rowStartsLarge = row % 2 === 0;
-  if (col === 0) return rowStartsLarge ? "large" : "compact";
-  return rowStartsLarge ? "compact" : "large";
-}
+const SIZE_PATTERN: ProductCardSize[] = [
+  "featured",
+  "compact",
+  "standard",
+  "compact",
+  "featured",
+  "standard",
+];
 
 export function getProductCardSize(index: number): ProductCardSize {
-  return cardVariantForIndex(index);
+  return SIZE_PATTERN[index % SIZE_PATTERN.length] ?? "standard";
 }
 
 type ProductCardProps = {
@@ -45,11 +50,16 @@ type ProductCardProps = {
 export function ProductCard({
   product,
   onPress,
-  size = "large",
+  size = "standard",
   animateEnter = false,
   enterDelay = 0,
 }: ProductCardProps) {
   const { colors, isDark } = useAppTheme();
+  const pressLift = useSharedValue(0);
+  const dims = SIZES[size];
+  const isFeatured = size === "featured";
+  const isCompact = size === "compact";
+
   const styles = useMemo(
     () =>
       StyleSheet.create({
@@ -59,11 +69,29 @@ export function ProductCard({
         },
         card: {
           width: "100%",
-          borderRadius: theme.radii.xl,
+          borderRadius: dims.radius,
           backgroundColor: colors.surface,
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: isFeatured
+            ? isDark
+              ? "rgba(255,122,24,0.35)"
+              : "rgba(234,88,12,0.28)"
+            : colors.border,
           overflow: "hidden",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: isFeatured ? 14 : 8 },
+          shadowOpacity: isDark ? (isFeatured ? 0.45 : 0.32) : isFeatured ? 0.14 : 0.08,
+          shadowRadius: isFeatured ? 20 : 12,
+          elevation: isFeatured ? 10 : 5,
+        },
+        accentBar: {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 3,
+          backgroundColor: colors.primary2,
+          opacity: isFeatured ? 0.9 : 0,
         },
         imageWrap: {
           backgroundColor: colors.surface2,
@@ -77,137 +105,158 @@ export function ProductCard({
         imagePlaceholder: {
           flex: 1,
           backgroundColor: mutedSurfaceFill(isDark),
+          alignItems: "center",
+          justifyContent: "center",
         },
         categoryPill: {
           position: "absolute",
-          top: 10,
-          left: 10,
-          paddingHorizontal: 10,
-          paddingVertical: 5,
+          top: isCompact ? 8 : 12,
+          left: isCompact ? 8 : 12,
+          paddingHorizontal: isCompact ? 8 : 10,
+          paddingVertical: isCompact ? 4 : 5,
           borderRadius: 999,
-          backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.45)",
+          backgroundColor: isDark ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.48)",
           borderWidth: 1,
-          borderColor: isDark ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.2)",
+          borderColor: "rgba(255,255,255,0.16)",
         },
-        pricePill: {
+        priceTag: {
           position: "absolute",
-          bottom: 10,
-          right: 10,
+          bottom: isCompact ? 8 : 12,
+          right: isCompact ? 8 : 12,
           flexDirection: "row",
           alignItems: "baseline",
           gap: 3,
-          paddingHorizontal: 10,
-          paddingVertical: 6,
+          paddingHorizontal: isFeatured ? 12 : 10,
+          paddingVertical: isFeatured ? 8 : 6,
           borderRadius: theme.radii.md,
           backgroundColor: colors.primary,
           borderWidth: 1,
-          borderColor: isDark ? "rgba(255,122,24,0.4)" : "rgba(187,77,0,0.35)",
+          borderColor: isDark ? "rgba(255,122,24,0.45)" : "rgba(187,77,0,0.35)",
         },
         body: {
           paddingHorizontal: theme.space[3],
-          paddingVertical: theme.space[3],
-          gap: 5,
+          paddingTop: theme.space[3],
+          paddingBottom: isCompact ? theme.space[2] : theme.space[3],
+          gap: isCompact ? 4 : 6,
           justifyContent: "flex-start",
         },
-        footer: {
+        metaRow: {
           flexDirection: "row",
           alignItems: "center",
           justifyContent: "space-between",
           marginTop: "auto",
+          paddingTop: isCompact ? 4 : 6,
         },
-        footerCompact: {
-          marginTop: 6,
-        },
-        chevron: {
-          width: 22,
-          height: 22,
-          borderRadius: 11,
+        cta: {
+          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: isDark ? "rgba(255,122,24,0.12)" : "rgba(234,88,12,0.10)",
+          gap: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 999,
+          backgroundColor: isDark ? "rgba(255,122,24,0.14)" : "rgba(234,88,12,0.10)",
           borderWidth: 1,
-          borderColor: isDark ? "rgba(255,122,24,0.25)" : "rgba(234,88,12,0.22)",
+          borderColor: isDark ? "rgba(255,122,24,0.28)" : "rgba(234,88,12,0.22)",
         },
       }),
-    [colors, isDark]
+    [colors, dims.radius, isCompact, isDark, isFeatured]
   );
 
-  const dims = SIZES[size];
   const fadeStyle = useFadeInUp(enterDelay, animateEnter);
   const imageGradient = productCardImageGradient(isDark);
 
+  const liftStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateY: interpolate(pressLift.value, [0, 1], [0, -3], Extrapolation.CLAMP),
+      },
+    ],
+  }));
+
   return (
-    <Animated.View style={[styles.wrap, fadeStyle]}>
-      <AnimatedPressable onPress={onPress} style={styles.card}>
+    <Animated.View style={[styles.wrap, fadeStyle, liftStyle]}>
+      <AnimatedPressable
+        onPress={onPress}
+        style={styles.card}
+        onPressIn={() => {
+          pressLift.value = withSpring(1, { damping: 18, stiffness: 320 });
+        }}
+        onPressOut={() => {
+          pressLift.value = withSpring(0, { damping: 18, stiffness: 320 });
+        }}
+      >
         <View style={[styles.imageWrap, { height: dims.image }]}>
           {product.imageUrl ? (
             <Image source={{ uri: product.imageUrl }} style={styles.image} resizeMode="cover" />
           ) : (
-            <View style={styles.imagePlaceholder} />
+            <View style={styles.imagePlaceholder}>
+              <FontAwesome name="image" size={isFeatured ? 28 : 20} color={colors.muted} />
+            </View>
           )}
 
           <LinearGradient
             colors={imageGradient}
-            locations={[0.35, 0.72, 1]}
+            locations={[0.2, 0.65, 1]}
             style={StyleSheet.absoluteFill}
           />
 
           {product.category?.name ? (
             <View style={styles.categoryPill}>
-              <AppText size={10} weight="medium" color="#F4F4F5">
+              <AppText size={isCompact ? 9 : 10} weight="medium" color="#F4F4F5">
                 {product.category.name}
               </AppText>
             </View>
           ) : null}
 
-          <View style={styles.pricePill}>
-            <AppText size={12} weight="bold" color="#FFF7ED">
+          <View style={styles.priceTag}>
+            <AppText size={isFeatured ? 14 : 12} weight="bold" color="#FFF7ED">
               {product.price.toFixed(0)}
             </AppText>
-            <AppText size={9} weight="medium" color="rgba(255,247,237,0.75)">
+            <AppText size={9} weight="medium" color="rgba(255,247,237,0.78)">
               EGP
             </AppText>
           </View>
         </View>
 
-        <View
-          style={[
-            styles.body,
-            { height: dims.body },
-            size === "compact" && { paddingBottom: COMPACT_BODY_PADDING_BOTTOM },
-          ]}
-        >
+        <View style={[styles.body, { minHeight: dims.body }]}>
           <AppText
-            size={size === "large" ? 14 : 13}
-            weight="semibold"
-            numberOfLines={size === "large" ? 2 : 1}
+            size={isFeatured ? 15 : isCompact ? 12 : 13}
+            weight="bold"
+            numberOfLines={isFeatured ? 2 : 1}
           >
             {product.name}
           </AppText>
 
-          {size === "large" && product.description ? (
-            <AppText size={11} color={colors.muted} numberOfLines={2}>
+          {!isCompact && product.description ? (
+            <AppText size={11} color={colors.muted} numberOfLines={isFeatured ? 2 : 1}>
               {product.description}
             </AppText>
           ) : null}
 
-          <View style={[styles.footer, size === "compact" && styles.footerCompact]}>
-            <AppText size={11} color={colors.muted}>
-              View
+          <View style={styles.metaRow}>
+            <AppText size={10} color={colors.muted}>
+              {isFeatured ? "Featured pick" : "Tap to view"}
             </AppText>
-            <View style={styles.chevron}>
-              <FontAwesome name="chevron-right" size={9} color={colors.primary2} />
+            <View style={styles.cta}>
+              <AppText size={10} weight="semibold" color={colors.primary2}>
+                Open
+              </AppText>
+              <FontAwesome name="chevron-right" size={8} color={colors.primary2} />
             </View>
           </View>
         </View>
+
+        <View style={styles.accentBar} />
       </AnimatedPressable>
     </Animated.View>
   );
 }
 
-export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize }) {
+export function ProductCardSkeleton({ size = "standard" }: { size?: ProductCardSize }) {
   const { colors, isDark } = useAppTheme();
   const dims = SIZES[size];
+  const isFeatured = size === "featured";
+  const isCompact = size === "compact";
 
   const styles = useMemo(
     () =>
@@ -218,7 +267,7 @@ export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize
         },
         card: {
           width: "100%",
-          borderRadius: theme.radii.xl,
+          borderRadius: dims.radius,
           backgroundColor: colors.surface,
           borderWidth: 1,
           borderColor: colors.border,
@@ -226,41 +275,29 @@ export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize
         },
         imageWrap: {
           backgroundColor: colors.surface2,
-          overflow: "hidden",
         },
         body: {
           paddingHorizontal: theme.space[3],
           paddingVertical: theme.space[3],
           gap: 8,
-          justifyContent: "flex-start",
         },
         shimmerLine: {
           borderRadius: 6,
           backgroundColor: skeletonLineFill(isDark),
         },
       }),
-    [colors, isDark]
+    [colors, dims.radius, isDark]
   );
 
   return (
     <View style={styles.wrap}>
       <View style={styles.card}>
         <View style={[styles.imageWrap, { height: dims.image }]} />
-        <View
-          style={[
-            styles.body,
-            { height: dims.body },
-            size === "compact" && { paddingBottom: COMPACT_BODY_PADDING_BOTTOM },
-          ]}
-        >
-          <View style={[styles.shimmerLine, { width: "88%", height: 12 }]} />
-          <View style={[styles.shimmerLine, { width: "62%", height: 10 }]} />
-          {size === "large" ? (
-            <View style={[styles.shimmerLine, { width: "78%", height: 10 }]} />
-          ) : null}
-          {size === "compact" ? (
-            <View style={[styles.shimmerLine, { width: "42%", height: 10 }]} />
-          ) : null}
+        <View style={[styles.body, { minHeight: dims.body }]}>
+          <View style={[styles.shimmerLine, { width: isFeatured ? "92%" : "85%", height: 13 }]} />
+          {!isCompact ? <View style={[styles.shimmerLine, { width: "70%", height: 10 }]} /> : null}
+          {isFeatured ? <View style={[styles.shimmerLine, { width: "55%", height: 10 }]} /> : null}
+          <View style={[styles.shimmerLine, { width: "40%", height: 10, marginTop: 4 }]} />
         </View>
       </View>
     </View>

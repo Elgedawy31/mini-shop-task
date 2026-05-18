@@ -19,7 +19,7 @@ import type { Product } from "@/lib/api/models";
 import { AppText, HStack, Screen } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
 import { EmptyState } from "@/ui/EmptyState";
-import { ProductCardSkeleton } from "@/ui/ProductCard";
+import { getProductCardSize, ProductCardSkeleton } from "@/ui/ProductCard";
 import { MasonryProductGrid } from "@/ui/shop/MasonryProductGrid";
 import { ShopCategoryChip } from "@/ui/shop/ShopCategoryChip";
 import { useDebouncedValue } from "@/ui/hooks/useDebouncedValue";
@@ -40,12 +40,12 @@ function MasonrySkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
     >
       <View style={{ flex: 1, gap: 12 }}>
         {Array.from({ length: rows }, (_, row) => (
-          <ProductCardSkeleton key={`left-${row}`} size={row % 2 === 0 ? "large" : "compact"} />
+          <ProductCardSkeleton key={`left-${row}`} size={getProductCardSize(row * 2)} />
         ))}
       </View>
       <View style={{ flex: 1, gap: 12 }}>
         {Array.from({ length: rows }, (_, row) => (
-          <ProductCardSkeleton key={`right-${row}`} size={row % 2 === 0 ? "compact" : "large"} />
+          <ProductCardSkeleton key={`right-${row}`} size={getProductCardSize(row * 2 + 1)} />
         ))}
       </View>
     </View>
@@ -263,7 +263,7 @@ export default function Shop() {
             key={gridKey}
             products={products}
             onPressProduct={handleProductPress}
-            animate={false}
+            animate
           />
         )}
 

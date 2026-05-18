@@ -61,6 +61,28 @@ bun dev:backend         # backend only
 
 ---
 
+## For reviewers — setup in 5 minutes
+
+This repo includes **`.env.example` files only** (placeholders). Real Supabase keys must go in **gitignored** `.env` files on your machine.
+
+1. **Supabase** — create a free project at [supabase.com](https://supabase.com), or use your own existing project.
+2. **Backend**
+   ```bash
+   cd backend && cp .env.example .env
+   ```
+   Paste **your** `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into `.env` (Dashboard → Project Settings → API).  
+   **Do not commit `.env`.** Never put service-role keys or DB passwords in `.env.example`.
+3. **Database**
+   ```bash
+   bun run db:link && bun run db:push && bun run seed
+   ```
+4. **Run** — `bun dev` (API + dashboard) and `cd mobile && npm start` (Expo).
+5. **Sign in** with the seeded test accounts below (no registration required for review).
+
+The same test account table is repeated in each app’s `.env.example` header for convenience.
+
+---
+
 ## Test accounts
 
 After `bun --cwd backend run seed`:
@@ -97,7 +119,7 @@ Seed also creates **3 categories** and **11 products**.
 
 ## Environment
 
-**Never commit `.env` files.** Each app has a committed `.env.example` (or template in README). If you already have working `.env` files locally, keep them — you only need to ensure the variables below are set.
+**Never commit `.env` files.** Each app has a committed **`.env.example`** with setup steps and **test account emails/passwords** (safe to share). **Supabase API keys and database passwords must only live in `.env`**, which is gitignored.
 
 ### Backend — `backend/.env` (required)
 

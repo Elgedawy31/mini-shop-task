@@ -34,6 +34,8 @@ REST API for the **Mini Shop** challenge: **Fastify 5**, **TypeScript**, **Supab
 cp .env.example .env   # skip if you already have a working backend/.env
 ```
 
+The template includes **setup steps** and **seeded test account credentials** (safe for git). Paste **your own** Supabase keys into `.env` only — see [root README](../README.md) → “For reviewers”.
+
 Fill in from **Project Settings → API** (or keep your existing values):
 
 ```bash
