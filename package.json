@@ -3,41 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": [
-    "dashboard",
-    "backend"
-  ],
   "scripts": {
-    "dev": "concurrently -n dashboard,backend -c cyan,green \"bun --cwd dashboard dev\" \"bun --cwd backend dev\"",
+    "dev": "bunx concurrently -n dashboard,backend -c cyan,green \"bun --cwd dashboard dev\" \"bun --cwd backend dev\"",
     "dev:dashboard": "bun --cwd dashboard dev",
     "dev:backend": "bun --cwd backend dev",
     "build": "bun run build:dashboard && bun run build:backend",
     "build:dashboard": "bun --cwd dashboard build",
     "build:backend": "bun --cwd backend build",
-    "lint": "eslint .",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\"",
-    "prepare": "husky"
+    "lint": "bunx eslint .",
+    "format": "bunx prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\"",
+    "format:check": "bunx prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\""
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,md,css,html,yml,yaml}": [
-      "prettier --write"
+    "*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}": [
+      "bunx prettier --write"
     ]
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.30.1",
-    "concurrently": "^9.2.0",
-    "eslint": "^9.30.1",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
-    "husky": "^9.1.7",
-    "lint-staged": "^16.1.2",
-    "prettier": "^3.3.3",
-    "typescript-eslint": "^8.35.1"
   }
 }

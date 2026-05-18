@@ -10,13 +10,16 @@ Full-stack mini e-commerce system for the **Mini Shop developer challenge**: mob
 
 **No Docker required.** Install [Bun](https://bun.sh) and run services directly on your machine at the ports above.
 
+Each app installs its own dependencies locally. The repo root is only a command launcher, so installs should be run inside `dashboard/` or `backend/`, not at the root.
+
 ---
 
 ## Quick start
 
 ```bash
-bun install
-bun dev
+cd dashboard && bun install
+cd ../backend && bun install
+cd .. && bun dev
 ```
 
 | Service         | URL                          |
@@ -64,7 +67,7 @@ bun lint
 bun format:check
 ```
 
-Husky runs lint-staged before commits.
+Formatting and linting can still be run from the repo root without a root install because they use `bunx`.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Professional web admin for the **Mini Shop** full-stack challenge. Store operators sign in here to monitor KPIs, manage the product catalogue, and fulfil orders from the mobile storefront.
 
-Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **port 5001**.
+Part of a **multi-app Bun repo** with no Docker: dashboard on **port 5000**, API on **port 5001**.
 
 ---
 
@@ -64,9 +64,10 @@ Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **
 
 ## Quick start
 
-From the **repository root**:
+From inside **`dashboard/`**:
 
 ```bash
+cd dashboard
 bun install
 bun dev
 ```
@@ -77,7 +78,7 @@ bun dev
 | http://localhost:5001        | Backend API     |
 | http://localhost:5001/health | Health check    |
 
-Dashboard only:
+From the repo root, you can still start the dashboard with:
 
 ```bash
 bun dev:dashboard
@@ -122,7 +123,7 @@ bun build        # Typecheck + production build
 bun preview      # Preview build on port 5000
 ```
 
-From monorepo root: `bun lint`, `bun run build`.
+From repo root: `bun lint`, `bun run build`.
 
 ---
 
