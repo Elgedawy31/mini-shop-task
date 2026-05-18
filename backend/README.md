@@ -2,11 +2,11 @@
 
 REST API for the **Mini Shop** challenge: **Fastify 5**, **TypeScript**, **Supabase** (PostgreSQL, Auth, Storage), **Zod** validation.
 
-| Setting | Value                                 |
-| ------- | ------------------------------------- |
-| Port    | **5001**                              |
-| CORS    | http://localhost:5000                 |
-| Runtime | [Bun](https://bun.sh) — **no Docker** |
+| Setting | Value                                      |
+| ------- | ------------------------------------------ |
+| Port    | **5001**                                   |
+| CORS    | Comma-separated origins (dashboard + Expo) |
+| Runtime | [Bun](https://bun.sh) — **no Docker**      |
 
 ---
 
@@ -76,11 +76,18 @@ Also seeds **3 categories** and **11 products**.
 | POST   | `/auth/register`        | Public                                           |
 | POST   | `/auth/login`           | Public                                           |
 | POST   | `/auth/refresh`         | Public — `{ refreshToken }` → new access token   |
-| POST   | `/auth/forgot-password` | Public                                           |
+| POST   | `/auth/forgotpassword`  | Public (PDF route name)                          |
+| POST   | `/auth/forgot-password` | Public (alias)                                   |
 | GET    | `/auth/setup/status`    | Public — `{ needsSetup }` when no admin exists   |
 | POST   | `/auth/setup`           | Public — create first admin (only if none exist) |
 | GET    | `/auth/me`              | Bearer JWT                                       |
 | PATCH  | `/auth/me`              | Bearer JWT                                       |
+
+### Categories
+
+| Method | Route         | Access |
+| ------ | ------------- | ------ |
+| GET    | `/categories` | Public |
 
 ### Products
 
@@ -95,12 +102,13 @@ Also seeds **3 categories** and **11 products**.
 
 ### Orders
 
-| Method | Route                | Access        |
-| ------ | -------------------- | ------------- |
-| POST   | `/orders`            | Authenticated |
-| GET    | `/orders/my`         | Authenticated |
-| GET    | `/orders`            | Admin         |
-| PATCH  | `/orders/:id/status` | Admin         |
+| Method | Route                | Access         |
+| ------ | -------------------- | -------------- |
+| POST   | `/orders`            | Authenticated  |
+| GET    | `/orders/my`         | Authenticated  |
+| GET    | `/orders`            | Admin          |
+| GET    | `/orders/:id`        | Owner or admin |
+| PATCH  | `/orders/:id/status` | Admin          |
 
 ### Dashboard
 
@@ -143,6 +151,19 @@ bun run typecheck
 ```
 
 ---
+
+## PDF Part 2 checklist
+
+| Area                                               | Status                      |
+| -------------------------------------------------- | --------------------------- |
+| Auth routes (register, login, forgot password, me) | Done                        |
+| Products CRUD + image upload                       | Done                        |
+| Orders (create, my, admin list, status update)     | Done                        |
+| Categories list for mobile filters                 | `GET /categories`           |
+| Zod validation + error contract                    | Done                        |
+| RLS + role checks                                  | Done                        |
+| Seed (11 products, 3 categories, 2 users)          | `bun run seed`              |
+| Unit tests                                         | `bun test ./src` (19 tests) |
 
 ## Security
 

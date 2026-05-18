@@ -130,18 +130,30 @@ async function main() {
   const slugToId = Object.fromEntries((insertedCategories ?? []).map((c) => [c.slug, c.id]));
 
   console.log("Seeding products...");
-  const productRows = products.map((p) => ({
-    name: p.name,
-    description: p.description,
-    price: p.price,
-    category_id: slugToId[p.categorySlug],
-    is_active: true,
-    image_url: null,
-  }));
+  for (const p of products) {
+    const { data: existing } = await supabase
+      .from("products")
+      .select("id")
+      .eq("name", p.name)
+      .is("deleted_at", null)
+      .maybeSingle();
 
-  const { error: productError } = await supabase.from("products").insert(productRows);
-  if (productError && !productError.message.includes("duplicate")) {
-    console.warn("Products insert:", productError.message);
+    if (existing) {
+      continue;
+    }
+
+    const { error: productError } = await supabase.from("products").insert({
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      category_id: slugToId[p.categorySlug],
+      is_active: true,
+      image_url: null,
+    });
+
+    if (productError) {
+      console.warn(`Product "${p.name}":`, productError.message);
+    }
   }
 
   console.log("Creating test users...");

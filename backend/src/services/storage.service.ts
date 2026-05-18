@@ -2,29 +2,18 @@ import { randomUUID } from "node:crypto";
 import { AppError } from "../errors/app-error.js";
 import { env } from "../config/env.js";
 import { createUserClient } from "../lib/supabase.js";
-
-const ALLOWED_MIME = new Set(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
-const MAX_BYTES = 1 * 1024 * 1024;
+import { productImageFileSchema } from "../schemas/upload.schema.js";
+import { parseBody } from "../lib/validate.js";
 
 export async function uploadProductImage(
   accessToken: string,
   file: { buffer: Buffer; mimetype: string; filename: string }
 ): Promise<string> {
-  if (!ALLOWED_MIME.has(file.mimetype)) {
-    throw new AppError({
-      code: "invalid_file_type",
-      message: "Only JPEG, PNG, and WebP images are allowed",
-      statusCode: 400,
-    });
-  }
-
-  if (file.buffer.length > MAX_BYTES) {
-    throw new AppError({
-      code: "file_too_large",
-      message: "Image must be 1MB or smaller",
-      statusCode: 400,
-    });
-  }
+  parseBody(productImageFileSchema, {
+    mimetype: file.mimetype,
+    size: file.buffer.length,
+    filename: file.filename,
+  });
 
   const ext = file.filename.split(".").pop() ?? "jpg";
   const path = `${randomUUID()}.${ext}`;

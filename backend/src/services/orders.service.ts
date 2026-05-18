@@ -9,7 +9,9 @@ import type { OrderItemRow, OrderRow, OrderStatus } from "../types/domain.js";
 import { assertStatusTransition } from "../utils/order-status.js";
 import { parsePagination } from "../utils/pagination.js";
 
-function mapOrder(row: OrderRow, items?: OrderItemRow[]) {
+type CustomerSummary = { id: string; name: string };
+
+function mapOrder(row: OrderRow, items?: OrderItemRow[], customer?: CustomerSummary | null) {
   return {
     id: row.id,
     userId: row.user_id,
@@ -17,6 +19,7 @@ function mapOrder(row: OrderRow, items?: OrderItemRow[]) {
     totalAmount: Number(row.total_amount),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    customer: customer ?? undefined,
     items: items?.map((item) => ({
       id: item.id,
       productId: item.product_id,
@@ -24,6 +27,30 @@ function mapOrder(row: OrderRow, items?: OrderItemRow[]) {
       unitPrice: Number(item.unit_price),
     })),
   };
+}
+
+async function loadCustomerProfiles(
+  client: ReturnType<typeof createUserClient>,
+  userIds: string[]
+): Promise<Map<string, CustomerSummary>> {
+  const uniqueIds = [...new Set(userIds)];
+  if (uniqueIds.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await client.from("profiles").select("id, name").in("id", uniqueIds);
+
+  if (error) {
+    throw new AppError({
+      code: "profiles_fetch_failed",
+      message: error.message,
+      statusCode: 500,
+    });
+  }
+
+  return new Map(
+    (data ?? []).map((profile) => [profile.id, { id: profile.id, name: profile.name }])
+  );
 }
 
 async function loadOrderItems(client: ReturnType<typeof createUserClient>, orderId: string) {
@@ -114,10 +141,16 @@ export async function listAllOrders(accessToken: string, query: OrderListQuery) 
     throw new AppError({ code: "orders_list_failed", message: error.message, statusCode: 500 });
   }
 
+  const rows = (data ?? []) as OrderRow[];
+  const profiles = await loadCustomerProfiles(
+    client,
+    rows.map((order) => order.user_id)
+  );
+
   const orders = await Promise.all(
-    ((data ?? []) as OrderRow[]).map(async (order) => {
+    rows.map(async (order) => {
       const items = await loadOrderItems(client, order.id);
-      return mapOrder(order, items);
+      return mapOrder(order, items, profiles.get(order.user_id) ?? null);
     })
   );
 

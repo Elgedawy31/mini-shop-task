@@ -16,7 +16,7 @@ export async function buildApp() {
 
   await app.register(helmet);
   await app.register(cors, {
-    origin: env.corsOrigin,
+    origin: env.corsOrigins,
     credentials: true,
   });
   await app.register(multipart, {

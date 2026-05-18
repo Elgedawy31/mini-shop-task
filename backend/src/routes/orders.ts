@@ -41,6 +41,26 @@ export async function orderRoutes(app: FastifyInstance) {
     }
   );
 
+  app.get(
+    "/orders/:id",
+    { preHandler: [authenticate, requireRole("customer", "admin")] },
+    async (request, reply) => {
+      const { id } = parseBody(orderIdParamSchema, request.params);
+      const order = await ordersService.getOrderById(request.accessToken!, id);
+
+      if (request.user!.role !== "admin" && order.userId !== request.user!.id) {
+        reply.status(403).send({
+          statusCode: 403,
+          error: "forbidden",
+          message: "You do not have permission to view this order",
+        });
+        return;
+      }
+
+      sendSuccess(reply, order);
+    }
+  );
+
   app.patch(
     "/orders/:id/status",
     { preHandler: [authenticate, requireRole("admin")] },

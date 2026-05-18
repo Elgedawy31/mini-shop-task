@@ -9,6 +9,7 @@ import {
   updateProductSchema,
 } from "../schemas/product.schema.js";
 import * as productsService from "../services/products.service.js";
+import { productImageFileSchema } from "../schemas/upload.schema.js";
 import { uploadProductImage } from "../services/storage.service.js";
 
 function optionalToken(request: { headers: { authorization?: string } }): string | undefined {
@@ -57,6 +58,12 @@ export async function productRoutes(app: FastifyInstance) {
       }
 
       const buffer = await file.toBuffer();
+      parseBody(productImageFileSchema, {
+        mimetype: file.mimetype,
+        size: buffer.length,
+        filename: file.filename,
+      });
+
       const imageUrl = await uploadProductImage(request.accessToken!, {
         buffer,
         mimetype: file.mimetype,

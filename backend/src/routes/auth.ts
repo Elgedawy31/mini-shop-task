@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { sendSuccess } from "../lib/api-response.js";
 import { parseBody } from "../lib/validate.js";
 import { authenticate } from "../plugins/auth.js";
@@ -11,6 +11,14 @@ import {
   updateProfileSchema,
 } from "../schemas/auth.schema.js";
 import * as authService from "../services/auth.service.js";
+
+async function handleForgotPassword(request: FastifyRequest, reply: FastifyReply) {
+  const body = parseBody(forgotPasswordSchema, request.body);
+  await authService.forgotPassword(body);
+  sendSuccess(reply, undefined, {
+    message: "If an account exists, a password reset email has been sent",
+  });
+}
 
 export async function authRoutes(app: FastifyInstance) {
   app.get("/auth/setup/status", async (_request, reply) => {
@@ -45,13 +53,9 @@ export async function authRoutes(app: FastifyInstance) {
     sendSuccess(reply, session, { message: "Session refreshed" });
   });
 
-  app.post("/auth/forgot-password", async (request, reply) => {
-    const body = parseBody(forgotPasswordSchema, request.body);
-    await authService.forgotPassword(body);
-    sendSuccess(reply, undefined, {
-      message: "If an account exists, a password reset email has been sent",
-    });
-  });
+  // PDF route name + kebab-case alias
+  app.post("/auth/forgotpassword", handleForgotPassword);
+  app.post("/auth/forgot-password", handleForgotPassword);
 
   app.get("/auth/me", { preHandler: [authenticate] }, async (request, reply) => {
     const user = await authService.getMe(request.accessToken!);
