@@ -27,13 +27,12 @@ export type {
 export { loginSchema, registerSchema } from "./types/AuthForm";
 
 export type {
-  User as AuthUser,
+  User as AuthServiceUser,
   LoginRequest,
   RegisterRequest,
-  LoginResponse,
-  RegisterResponse,
-  RefreshTokenRequest,
-  LogoutResponse,
+  AuthResult,
+  UpdateUserRequest,
+  UpdateUserResponse,
 } from "./services/authService";
 
 // Auth Components

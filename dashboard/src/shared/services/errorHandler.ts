@@ -1,9 +1,12 @@
 import { toast } from "sonner";
 import logger from "../utils/logger";
 
-// Error response type based on your API format
+import type { ApiClientError } from "../types/api";
+import { isApiErrorBody, parseErrorBody } from "../lib/apiResponse";
+
 export interface ApiErrorResponse {
-  success: boolean;
+  success?: boolean;
+  statusCode?: number;
   error?: string;
   message?: string;
   errors?: string[];
@@ -47,28 +50,50 @@ export class ErrorHandler {
   /**
    * Handle API errors from your backend
    */
-  static handleApiError(error: any, context?: Record<string, any>): void {
+  static handleApiError(error: unknown, context?: Record<string, unknown>): void {
     console.error("🚨 API Error:", error, context);
 
     let errorMessage = "An unexpected error occurred";
     let errorType: ErrorType = ErrorType.UNKNOWN;
     let severity: ErrorSeverity = ErrorSeverity.MEDIUM;
+    let status: number | undefined;
 
-    // Handle different error scenarios
-    if (error?.response?.data) {
-      const apiError: ApiErrorResponse = error.response.data;
+    // Normalized client error from apiClient
+    if (error && typeof error === "object" && "message" in error && !("response" in error)) {
+      const clientError = error as ApiClientError;
+      errorMessage = clientError.message;
+      status = clientError.status;
+    } else if (
+      error &&
+      typeof error === "object" &&
+      "response" in error &&
+      (error as { response?: { data?: unknown; status?: number } }).response?.data
+    ) {
+      const response = (error as { response: { data: unknown; status: number } }).response;
+      const parsed = parseErrorBody(response.data);
 
-      // Your API format: { success: false, error: "string" }
-      if (!apiError.success && apiError.error) {
-        errorMessage = apiError.error;
-      } else if (apiError.message) {
-        errorMessage = apiError.message;
-      } else if (apiError.errors && apiError.errors.length > 0) {
-        errorMessage = apiError.errors[0];
+      if (parsed) {
+        errorMessage = parsed.message;
+        status = parsed.status ?? response.status;
+      } else {
+        const apiError = response.data as ApiErrorResponse;
+        if (isApiErrorBody(apiError)) {
+          errorMessage = apiError.message;
+          status = apiError.statusCode;
+        } else if (apiError.message) {
+          errorMessage = apiError.message;
+        } else if (typeof apiError.error === "string") {
+          errorMessage = apiError.error;
+        } else if (apiError.errors?.length) {
+          errorMessage = apiError.errors[0];
+        }
+        status = response.status;
       }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    }
 
-      // Determine error type based on status code
-      const status = error.response.status;
+    if (status !== undefined) {
       if (status === 401) {
         errorType = ErrorType.AUTHENTICATION;
         severity = ErrorSeverity.HIGH;
@@ -83,15 +108,19 @@ export class ErrorHandler {
       } else if (status >= 500) {
         errorType = ErrorType.SERVER;
         severity = ErrorSeverity.HIGH;
-        errorMessage = "Server error. Please try again later.";
+        if (errorMessage === "An unexpected error occurred") {
+          errorMessage = "Server error. Please try again later.";
+        }
       }
-    } else if (error?.request) {
-      // Network error
+    } else if (
+      error &&
+      typeof error === "object" &&
+      "request" in error &&
+      !(error as { response?: unknown }).response
+    ) {
       errorType = ErrorType.NETWORK;
       severity = ErrorSeverity.HIGH;
       errorMessage = "Network error. Please check your connection.";
-    } else if (error?.message) {
-      errorMessage = error.message;
     }
 
     // Show toast notification

@@ -1,23 +1,11 @@
 import axios from "axios";
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import { API_CONFIG } from "../config/api";
+import { parseErrorBody, toFailureResponse } from "../lib/apiResponse";
+import type { ApiClientError, ApiResponse } from "../types/api";
 import Cookies from "js-cookie";
 
-// Types for API responses - Backend returns data directly, not wrapped in 'data'
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-  errors?: string[];
-  [key: string]: any;
-}
-
-export interface ApiError {
-  message: string;
-  status?: number;
-  errors?: string[];
-}
+export type { ApiResponse, ApiClientError } from "../types/api";
 
 export interface UploadProgress {
   loaded: number;
@@ -25,7 +13,6 @@ export interface UploadProgress {
   percentage: number;
 }
 
-// Create the main API client
 class ApiClient {
   private client: AxiosInstance;
 
@@ -40,7 +27,6 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    // Request interceptor for auth tokens
     this.client.interceptors.request.use(
       (config) => {
         const token = Cookies.get(API_CONFIG.AUTH_TOKEN_KEY);
@@ -49,180 +35,155 @@ class ApiClient {
         }
         return config;
       },
-      (error) => {
-        return Promise.reject(this.handleError(error));
-      }
+      (error) => Promise.reject(this.handleError(error))
     );
 
-    // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
-      (error) => {
-        return Promise.reject(this.handleError(error));
-      }
+      (error) => Promise.reject(this.handleError(error))
     );
   }
 
-  private handleError(error: any): ApiError {
-    const apiError: ApiError = {
+  private handleError(error: unknown): ApiClientError {
+    const fallback: ApiClientError = {
       message: "An unexpected error occurred",
-      status: error.response?.status,
-      errors: [],
     };
 
-    if (error.response) {
-      // Server responded with error status
-      apiError.message =
-        error.response.data?.error || error.response.data?.message || error.message;
-      apiError.errors = error.response.data?.errors || [];
-      apiError.status = error.response.status;
-    } else if (error.request) {
-      // Request was made but no response received
-      apiError.message = "Network error - please check your connection";
-    } else {
-      // Something else happened
-      apiError.message = error.message;
+    if (!axios.isAxiosError(error)) {
+      if (error instanceof Error) {
+        return { message: error.message };
+      }
+      return fallback;
     }
 
-    console.error("API Error:", apiError);
-    return apiError;
+    if (error.response?.data) {
+      const parsed = parseErrorBody(error.response.data);
+      if (parsed) {
+        return {
+          ...parsed,
+          status: parsed.status ?? error.response.status,
+        };
+      }
+    }
+
+    if (error.response) {
+      return {
+        message: error.message,
+        status: error.response.status,
+      };
+    }
+
+    if (error.request) {
+      return { message: "Network error — please check your connection" };
+    }
+
+    return { message: error.message || fallback.message };
   }
 
-  // Generic HTTP methods
+  private async request<T>(
+    method: "get" | "post" | "put" | "patch" | "delete",
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.client.request<ApiResponse<T>>({
+        method,
+        url,
+        data,
+        ...config,
+      });
+
+      const body = response.data;
+
+      if (body && typeof body === "object" && "success" in body && body.success === false) {
+        return toFailureResponse<T>({
+          message: body.message ?? body.error ?? "Request failed",
+          status: body.statusCode,
+          error: body.error,
+          errors: body.errors,
+        });
+      }
+
+      return body;
+    } catch (error) {
+      const apiError = error as ApiClientError;
+      return toFailureResponse<T>(apiError);
+    }
+  }
+
   async get<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.get<ApiResponse<T>>(url, config);
-    return response.data;
+    return this.request<T>("get", url, undefined, config);
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.post<ApiResponse<T>>(url, data, config);
-    return response.data;
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this.request<T>("post", url, data, config);
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.put<ApiResponse<T>>(url, data, config);
-    return response.data;
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    return this.request<T>("put", url, data, config);
   }
 
-  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.patch<ApiResponse<T>>(url, data, config);
-    return response.data;
+  async patch<T>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
+    return this.request<T>("patch", url, data, config);
   }
 
   async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    const response = await this.client.delete<ApiResponse<T>>(url, config);
-    return response.data;
+    return this.request<T>("delete", url, undefined, config);
   }
 
-  // Specialized method for file uploads with progress tracking
   async uploadFiles(
     files: File[],
     onProgress?: (progress: UploadProgress) => void
   ): Promise<ApiResponse<{ names: string[] }>> {
     const formData = new FormData();
+    files.forEach((file) => formData.append("photos", file));
 
-    // Append all files to FormData
-    files.forEach((file) => {
-      formData.append("photos", file);
-    });
-
-    const response = await this.client.post(API_CONFIG.ENDPOINTS.FILES.BULK_UPLOAD, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.total) {
-          const progress: UploadProgress = {
-            loaded: progressEvent.loaded,
-            total: progressEvent.total,
-            percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
-          };
-          onProgress(progress);
-        }
-      },
-    });
-
-    // Transform the API response to match our expected format
-    const apiResponse = response.data;
-
-    // Handle the actual API response structure: { success: true, files: [...] }
-    if (apiResponse.success && apiResponse.files) {
-      const names = apiResponse.files
-        .filter((file: any) => file.success && file.name)
-        .map((file: any) => file.name);
-      return {
-        success: true,
-        data: { names },
-        message: apiResponse.message,
-      };
-    }
-
-    // If the response doesn't match expected format, return error
-    return {
-      success: false,
-      message: apiResponse.message || "Upload failed",
-      errors: ["Invalid response format from upload service"],
-    };
-  }
-
-  // Method for replacing a single file
-  async replaceFile(
-    fileName: string,
-    file: File,
-    onProgress?: (progress: UploadProgress) => void
-  ): Promise<ApiResponse<{ url: string; originalName: string }>> {
-    const formData = new FormData();
-    formData.append("photo", file);
-
-    const response = await this.client.patch(
-      API_CONFIG.ENDPOINTS.FILES.REPLACE_FILE(fileName),
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+    try {
+      const response = await this.client.post(API_CONFIG.ENDPOINTS.FILES.BULK_UPLOAD, formData, {
+        headers: API_CONFIG.HEADERS.MULTIPART,
         onUploadProgress: (progressEvent) => {
           if (onProgress && progressEvent.total) {
-            const progress: UploadProgress = {
+            onProgress({
               loaded: progressEvent.loaded,
               total: progressEvent.total,
               percentage: Math.round((progressEvent.loaded * 100) / progressEvent.total),
-            };
-            onProgress(progress);
+            });
           }
         },
-      }
-    );
+      });
 
-    // Transform the API response
-    const apiResponse = response.data;
-
-    if (apiResponse.success) {
-      return {
-        success: true,
-        data: {
-          url: apiResponse.url,
-          originalName: apiResponse.originalName,
-        },
-        message: apiResponse.message || "File replaced successfully",
+      const apiResponse = response.data as ApiResponse<{ names: string[] }> & {
+        files?: Array<{ success: boolean; name: string }>;
       };
-    }
 
-    return {
-      success: false,
-      message: apiResponse.message || "File replacement failed",
-      errors: ["Failed to replace file"],
-    };
+      if (apiResponse.success && apiResponse.files) {
+        const names = apiResponse.files.filter((f) => f.success && f.name).map((f) => f.name);
+        return { success: true, data: { names }, message: apiResponse.message };
+      }
+
+      if (apiResponse.success && apiResponse.data) {
+        return apiResponse;
+      }
+
+      return {
+        success: false,
+        message: apiResponse.message ?? "Upload failed",
+        errors: ["Invalid response from upload service"],
+      };
+    } catch (error) {
+      return toFailureResponse(error as ApiClientError);
+    }
   }
 
-  // Get the raw axios instance for advanced use cases
   getRawClient(): AxiosInstance {
     return this.client;
   }
 }
 
-// Create and export a singleton instance
 export const apiClient = new ApiClient();
-
-// Export the class for testing or advanced use cases
 export { ApiClient };

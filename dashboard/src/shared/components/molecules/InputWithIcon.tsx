@@ -21,7 +21,7 @@ export const InputWithIcon = ({
   return (
     <div className={cn("relative flex items-center", containerClassName)}>
       {hasIcon && iconPosition === "left" && (
-        <span className="absolute left-3 text-zinc-500">{icon}</span>
+        <span className="absolute left-3 text-muted-foreground">{icon}</span>
       )}
 
       <Input
@@ -30,7 +30,7 @@ export const InputWithIcon = ({
       />
 
       {hasIcon && iconPosition === "right" && (
-        <span className="absolute right-3 text-zinc-500">{icon}</span>
+        <span className="absolute right-3 text-muted-foreground">{icon}</span>
       )}
     </div>
   );

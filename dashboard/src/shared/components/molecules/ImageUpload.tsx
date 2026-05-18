@@ -213,9 +213,9 @@ export function ImageUpload({
                 </Button>
 
                 {/* File Info */}
-                <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2 rounded-b-lg">
+                <div className="absolute bottom-0 left-0 right-0 bg-foreground/60 text-primary-foreground p-2 rounded-b-lg">
                   <p className="text-xs truncate">{imageFile.file.name}</p>
-                  <p className="text-xs text-gray-300">
+                  <p className="text-xs text-primary-foreground/80">
                     {(imageFile.file.size / 1024).toFixed(0)} KB
                   </p>
                 </div>

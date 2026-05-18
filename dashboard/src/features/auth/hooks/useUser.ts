@@ -24,16 +24,23 @@ export function useUpdateUser() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: UpdateUserRequest }) =>
       AuthService.updateUser(id, data),
-    onSuccess: (updatedUser, { id }) => {
-      logger.info("✅ User updated successfully:", updatedUser);
+    onSuccess: (result, { id }) => {
+      if (!result.success) {
+        handleApiError(
+          { message: result.error ?? result.message ?? "Update failed" },
+          { context: "Update Profile" }
+        );
+        return;
+      }
 
-      // Update the specific user in cache
-      queryClient.setQueryData(userKeys.detail(id), updatedUser.user);
+      logger.info("✅ User updated successfully:", result);
 
-      // Invalidate auth queries to refresh user data
+      if (result.user) {
+        queryClient.setQueryData(userKeys.detail(id), result.user);
+      }
+
       queryClient.invalidateQueries({ queryKey: ["auth"] });
-
-      showSuccess("Profile updated successfully!");
+      showSuccess(result.message ?? "Profile updated successfully!");
     },
     onError: (error: any) => {
       logger.error("❌ Error updating user:", error);

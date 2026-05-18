@@ -11,17 +11,17 @@ interface StatusBadgeProps {
 const statusConfig = {
   connected: {
     variant: "default" as const,
-    className: "bg-green-500 hover:bg-green-600 text-white",
+    className: "bg-success text-success-foreground hover:bg-success/90 border-transparent",
     text: "Connected",
   },
   disconnected: {
     variant: "destructive" as const,
-    className: "bg-red-500 hover:bg-red-600 text-white",
+    className: "bg-destructive text-primary-foreground hover:bg-destructive/90 border-transparent",
     text: "Not connected",
   },
   pending: {
     variant: "secondary" as const,
-    className: "bg-yellow-500 hover:bg-yellow-600 text-white",
+    className: "bg-warning text-warning-foreground hover:bg-warning/90 border-transparent",
     text: "Pending",
   },
 };

@@ -1,24 +1,14 @@
-import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyError, FastifyInstance, FastifyReply } from "fastify";
 import { AppError } from "../errors/app-error.js";
-
-type ErrorResponse = {
-  error: {
-    code: string;
-    message: string;
-    requestId: string;
-    details?: unknown;
-  };
-};
+import { buildErrorBody } from "../lib/api-response.js";
 
 export function registerErrorHandler(app: FastifyInstance) {
   app.setNotFoundHandler((request, reply) => {
-    reply.status(404).send({
-      error: {
-        code: "route_not_found",
-        message: `Route ${request.method} ${request.url} was not found`,
-        requestId: request.id,
-      },
-    } satisfies ErrorResponse);
+    reply
+      .status(404)
+      .send(
+        buildErrorBody(404, "not_found", `Route ${request.method} ${request.url} was not found`)
+      );
   });
 
   app.setErrorHandler((error: FastifyError | AppError, request, reply) => {
@@ -34,7 +24,7 @@ export function registerErrorHandler(app: FastifyInstance) {
       "Request failed"
     );
 
-    sendError(reply, request, normalized);
+    sendError(reply, normalized);
   });
 }
 
@@ -61,15 +51,6 @@ function normalizeError(error: FastifyError | AppError): AppError {
   });
 }
 
-function sendError(reply: FastifyReply, request: FastifyRequest, error: AppError) {
-  const body: ErrorResponse = {
-    error: {
-      code: error.code,
-      message: error.message,
-      requestId: request.id,
-      ...(error.details ? { details: error.details } : {}),
-    },
-  };
-
-  reply.status(error.statusCode).send(body);
+function sendError(reply: FastifyReply, error: AppError) {
+  reply.status(error.statusCode).send(buildErrorBody(error.statusCode, error.code, error.message));
 }

@@ -47,9 +47,9 @@ function LoginForm({
               icon={<Mail className="w-5 h-5" />}
               iconPosition="right"
               {...register("email")}
-              className={errors.email ? "border-red-500" : ""}
+              className={errors.email ? "border-destructive" : ""}
             />
-            {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
+            {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -60,9 +60,11 @@ function LoginForm({
               id="password"
               placeholder="Password"
               {...register("password")}
-              className={errors.password ? "border-red-500" : ""}
+              className={errors.password ? "border-destructive" : ""}
             />
-            {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
           </div>
 
           <Button

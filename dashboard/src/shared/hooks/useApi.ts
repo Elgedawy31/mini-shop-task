@@ -1,18 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "../services/apiClient";
-import type { ApiResponse, UploadProgress } from "../services/apiClient";
+import type { ApiResponse } from "../types/api";
+import type { UploadProgress } from "../services/apiClient";
 
-// Re-export the API client for direct use
 export { apiClient };
 
-// Generic API hooks using the professional ApiClient
 export function useApiQuery<T>(key: string[], url: string, queryOptions?: Record<string, unknown>) {
   return useQuery({
     queryKey: key,
     queryFn: async (): Promise<T> => {
-      const response: ApiResponse<T> = await apiClient.get(url);
+      const response: ApiResponse<T> = await apiClient.get<T>(url);
       if (!response.success) {
-        throw new Error(response.message || "API request failed");
+        throw new Error(response.message ?? response.error ?? "API request failed");
       }
       return response.data as T;
     },
@@ -32,35 +31,33 @@ export function useApiMutation<T, V>(
 
       switch (method) {
         case "post":
-          response = await apiClient.post(url, data);
+          response = await apiClient.post<T>(url, data);
           break;
         case "put":
-          response = await apiClient.put(url, data);
+          response = await apiClient.put<T>(url, data);
           break;
         case "patch":
-          response = await apiClient.patch(url, data);
+          response = await apiClient.patch<T>(url, data);
           break;
         case "delete":
-          response = await apiClient.delete(url);
+          response = await apiClient.delete<T>(url);
           break;
         default:
           throw new Error(`Unsupported method: ${method}`);
       }
 
       if (!response.success) {
-        throw new Error(response.message || "API request failed");
+        throw new Error(response.message ?? response.error ?? "API request failed");
       }
 
       return response.data as T;
     },
     onSuccess: () => {
-      // Invalidate and refetch queries after successful mutation
       queryClient.invalidateQueries();
     },
   });
 }
 
-// File upload hook using the professional ApiClient
 export function useFileUpload() {
   return useMutation({
     mutationFn: async ({
@@ -73,7 +70,7 @@ export function useFileUpload() {
       const response = await apiClient.uploadFiles(files, onProgress);
 
       if (!response.success) {
-        throw new Error(response.message || "File upload failed");
+        throw new Error(response.message ?? response.error ?? "File upload failed");
       }
 
       return response.data;
