@@ -1,14 +1,7 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  type ViewStyle,
-} from "react-native";
+import { useEffect } from "react";
+import { Platform, Pressable, StyleSheet, View, type ViewStyle } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -16,14 +9,17 @@ import Animated, {
   withRepeat,
   withTiming,
 } from "react-native-reanimated";
-import { useEffect } from "react";
+import {
+  KeyboardAwareScrollView,
+  useReanimatedKeyboardAnimation,
+} from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 import { theme } from "@/theme/theme";
+import { useAuthScrollMotion } from "@/ui/hooks/useAuthScrollMotion";
 import { LogoMark } from "@/ui/LogoMark";
 import { AppText } from "@/ui/Primitives";
-import { AnimatedReveal } from "@/ui/form/AnimatedReveal";
 
 type AuthScreenProps = {
   title: string;
@@ -43,6 +39,18 @@ export function AuthScreen({
   badge,
 }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
+  const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
+
+  const {
+    scrollHandler,
+    glowPrimaryStyle,
+    glowSecondaryStyle,
+    brandStyle,
+    headerStyle,
+    cardStyle,
+    footerStyle,
+    progressStyle,
+  } = useAuthScrollMotion(keyboardHeight);
 
   return (
     <View style={styles.root}>
@@ -52,86 +60,83 @@ export function AuthScreen({
         end={{ x: 0.85, y: 1 }}
         style={StyleSheet.absoluteFill}
       />
-      <AuthGlow style={styles.glowPrimary} />
-      <AuthGlow style={styles.glowSecondary} delay={600} />
 
-      <KeyboardAvoidingView
+      <View style={styles.progressTrack} pointerEvents="none">
+        <Animated.View style={[styles.progressBar, progressStyle]} />
+      </View>
+
+      <AuthGlow style={styles.glowPrimary} motionStyle={glowPrimaryStyle} />
+      <AuthGlow style={styles.glowSecondary} delay={600} motionStyle={glowSecondaryStyle} />
+
+      <KeyboardAwareScrollView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? insets.top + 8 : 0}
+        contentContainerStyle={[
+          styles.scrollContent,
+          {
+            paddingTop: insets.top + theme.space[3],
+            paddingBottom: insets.bottom + theme.space[6],
+          },
+        ]}
+        bottomOffset={insets.bottom + theme.space[5]}
+        extraKeyboardSpace={theme.space[6]}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler}
+        bounces
       >
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={[
-            styles.scrollContent,
-            {
-              paddingTop: insets.top + theme.space[4],
-              paddingBottom: Math.max(insets.bottom, theme.space[4]) + theme.space[8],
-            },
-          ]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
-          showsVerticalScrollIndicator={false}
-          automaticallyAdjustKeyboardInsets
-        >
-          {showBack ? (
-            <AnimatedReveal delay={0}>
-              <Pressable
-                onPress={() => router.back()}
-                hitSlop={12}
-                style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
-              >
-                <FontAwesome name="chevron-left" size={14} color={theme.colors.text} />
-                <AppText size={13} weight="medium">
-                  Back
-                </AppText>
-              </Pressable>
-            </AnimatedReveal>
-          ) : null}
+        {showBack ? (
+          <Pressable
+            onPress={() => router.back()}
+            hitSlop={12}
+            style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
+          >
+            <FontAwesome name="chevron-left" size={14} color={theme.colors.text} />
+            <AppText size={13} weight="medium">
+              Back
+            </AppText>
+          </Pressable>
+        ) : null}
 
-          <AnimatedReveal delay={showBack ? 40 : 0}>
-            <View style={styles.brandRow}>
-              <LogoMark size={48} />
-              <View style={styles.brandText}>
-                <AppText size={11} weight="semibold" color={theme.colors.primary2}>
-                  MINI SHOP
-                </AppText>
-                <AppText size={13} color={theme.colors.muted}>
-                  Premium storefront
-                </AppText>
-              </View>
-            </View>
-          </AnimatedReveal>
-
-          <AnimatedReveal delay={showBack ? 80 : 40}>
-            <View style={styles.header}>
-              {badge ? (
-                <View style={styles.badge}>
-                  <AppText size={11} weight="semibold" color={theme.colors.primary2}>
-                    {badge}
-                  </AppText>
-                </View>
-              ) : null}
-              <AppText size={28} weight="bold" style={styles.title}>
-                {title}
+        <Animated.View style={brandStyle}>
+          <View style={styles.brandRow}>
+            <LogoMark size={48} />
+            <View style={styles.brandText}>
+              <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+                MINI SHOP
               </AppText>
-              <AppText size={14} color={theme.colors.muted} style={styles.subtitle}>
-                {subtitle}
+              <AppText size={13} color={theme.colors.muted}>
+                Premium storefront
               </AppText>
             </View>
-          </AnimatedReveal>
+          </View>
+        </Animated.View>
 
-          <AnimatedReveal delay={showBack ? 120 : 80}>
-            <AuthFormCard>{children}</AuthFormCard>
-          </AnimatedReveal>
-
-          {footer ? (
-            <AnimatedReveal delay={showBack ? 160 : 120}>
-              <View style={styles.footer}>{footer}</View>
-            </AnimatedReveal>
+        <Animated.View style={[styles.header, headerStyle]}>
+          {badge ? (
+            <View style={styles.badge}>
+              <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+                {badge}
+              </AppText>
+            </View>
           ) : null}
-        </ScrollView>
-      </KeyboardAvoidingView>
+          <AppText size={28} weight="bold" style={styles.title}>
+            {title}
+          </AppText>
+          <AppText size={14} color={theme.colors.muted} style={styles.subtitle}>
+            {subtitle}
+          </AppText>
+        </Animated.View>
+
+        <Animated.View style={cardStyle}>
+          <AuthFormCard>{children}</AuthFormCard>
+        </Animated.View>
+
+        {footer ? (
+          <Animated.View style={[styles.footer, footerStyle]}>{footer}</Animated.View>
+        ) : null}
+      </KeyboardAwareScrollView>
     </View>
   );
 }
@@ -177,23 +182,44 @@ export function AuthLink({
   );
 }
 
-function AuthGlow({ style, delay = 0 }: { style: ViewStyle; delay?: number }) {
+function AuthGlow({
+  style,
+  delay = 0,
+  motionStyle,
+}: {
+  style: ViewStyle;
+  delay?: number;
+  motionStyle: object;
+}) {
   const pulse = useSharedValue(0);
 
   useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true
-    );
+    const timeout = setTimeout(() => {
+      pulse.value = withRepeat(
+        withTiming(1, { duration: 3200, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true
+      );
+    }, delay);
+    return () => clearTimeout(timeout);
   }, [pulse, delay]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
+  const pulseStyle = useAnimatedStyle(() => ({
     opacity: 0.32 + pulse.value * 0.18,
     transform: [{ scale: 0.92 + pulse.value * 0.12 }],
   }));
 
-  return <Animated.View style={[style, animatedStyle]} />;
+  return (
+    <Animated.View style={[style, motionStyle]} pointerEvents="none">
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFillObject,
+          { borderRadius: 999, backgroundColor: style.backgroundColor },
+          pulseStyle,
+        ]}
+      />
+    </Animated.View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -204,17 +230,30 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
   },
+  progressTrack: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    zIndex: 20,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  progressBar: {
+    height: 2,
+    backgroundColor: theme.colors.primary2,
+    borderRadius: 999,
+  },
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.space[5],
-    gap: theme.space[5],
+    gap: theme.space[4],
   },
   glowPrimary: {
     position: "absolute",
     width: 220,
     height: 220,
     borderRadius: 999,
-    opacity: 0.45,
     top: -60,
     right: -40,
     backgroundColor: "rgba(255,122,24,0.22)",
@@ -224,7 +263,6 @@ const styles = StyleSheet.create({
     width: 220,
     height: 220,
     borderRadius: 999,
-    opacity: 0.45,
     bottom: 80,
     left: -80,
     backgroundColor: "rgba(187,77,0,0.18)",
@@ -240,7 +278,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: theme.space[4],
-    marginTop: theme.space[2],
+    marginTop: theme.space[1],
   },
   brandText: {
     gap: 2,

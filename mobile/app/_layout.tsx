@@ -6,6 +6,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo } from "react";
 import "react-native-reanimated";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import { queryClient } from "@/lib/queryClient";
 import { theme } from "@/theme/theme";
@@ -81,27 +82,29 @@ function RootLayoutNav() {
   );
 
   return (
-    <ThemeProvider value={navTheme}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <CartProvider>
-            <Stack
-              screenOptions={{
-                headerTintColor: theme.colors.text,
-                headerStyle: { backgroundColor: theme.colors.surface },
-              }}
-            >
-              <Stack.Screen name="splash" options={{ headerShown: false }} />
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="product/[id]" options={{ title: "Product" }} />
-              <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
-              <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
-            </Stack>
-            <ToastHost />
-          </CartProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+    <KeyboardProvider>
+      <ThemeProvider value={navTheme}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <CartProvider>
+              <Stack
+                screenOptions={{
+                  headerTintColor: theme.colors.text,
+                  headerStyle: { backgroundColor: theme.colors.surface },
+                }}
+              >
+                <Stack.Screen name="splash" options={{ headerShown: false }} />
+                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="product/[id]" options={{ title: "Product" }} />
+                <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
+                <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
+              </Stack>
+              <ToastHost />
+            </CartProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </KeyboardProvider>
   );
 }
