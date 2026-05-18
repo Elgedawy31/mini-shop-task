@@ -6,6 +6,7 @@ import { AuthLink, AuthScreen } from "@/ui/AuthScreen";
 export default function ForgotPassword() {
   return (
     <AuthScreen
+      screenKey="forgot-password"
       showBack
       badge="Account recovery"
       title="Reset password"

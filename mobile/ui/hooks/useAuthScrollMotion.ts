@@ -2,35 +2,35 @@ import { Dimensions } from "react-native";
 import {
   Extrapolation,
   interpolate,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
-  useSharedValue,
   type SharedValue,
 } from "react-native-reanimated";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 
-/** Scroll-linked motion for auth screens (parallax + compact chrome). */
-export function useAuthScrollMotion(keyboardHeight: SharedValue<number>) {
-  const scrollY = useSharedValue(0);
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
+/** Scroll + keyboard linked motion for auth screens. */
+export function useAuthScrollMotion(
+  scrollOffset: SharedValue<number>,
+  keyboardHeight: SharedValue<number>,
+  screenActive: SharedValue<number>
+) {
+  const glowPrimaryStyle = useAnimatedStyle(() => {
+    const y = scrollOffset.value;
+    return {
+      transform: [{ translateY: y * 0.42 }, { translateX: y * -0.08 }],
+    };
   });
 
-  const glowPrimaryStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: scrollY.value * 0.42 }, { translateX: scrollY.value * -0.08 }],
-  }));
-
-  const glowSecondaryStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: scrollY.value * -0.28 }, { translateX: scrollY.value * 0.12 }],
-  }));
+  const glowSecondaryStyle = useAnimatedStyle(() => {
+    const y = scrollOffset.value;
+    return {
+      transform: [{ translateY: y * -0.28 }, { translateX: y * 0.12 }],
+    };
+  });
 
   const brandStyle = useAnimatedStyle(() => {
-    const kb = keyboardHeight.value;
-    const y = scrollY.value;
+    const kb = keyboardHeight.value * screenActive.value;
+    const y = scrollOffset.value;
 
     const scrollOpacity = interpolate(y, [0, 72, 150], [1, 0.88, 0.2], Extrapolation.CLAMP);
     const keyboardOpacity = interpolate(kb, [0, 120, 220], [1, 0.85, 0], Extrapolation.CLAMP);
@@ -52,8 +52,8 @@ export function useAuthScrollMotion(keyboardHeight: SharedValue<number>) {
   });
 
   const headerStyle = useAnimatedStyle(() => {
-    const kb = keyboardHeight.value;
-    const y = scrollY.value;
+    const kb = keyboardHeight.value * screenActive.value;
+    const y = scrollOffset.value;
 
     return {
       opacity: Math.min(
@@ -71,7 +71,7 @@ export function useAuthScrollMotion(keyboardHeight: SharedValue<number>) {
   });
 
   const cardStyle = useAnimatedStyle(() => {
-    const y = scrollY.value;
+    const y = scrollOffset.value;
     return {
       transform: [
         {
@@ -85,20 +85,19 @@ export function useAuthScrollMotion(keyboardHeight: SharedValue<number>) {
   });
 
   const footerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(scrollY.value, [0, 80, 160], [1, 0.92, 0.75], Extrapolation.CLAMP),
+    opacity: interpolate(scrollOffset.value, [0, 80, 160], [1, 0.92, 0.75], Extrapolation.CLAMP),
     transform: [
       {
-        translateY: interpolate(scrollY.value, [0, 160], [0, -8], Extrapolation.CLAMP),
+        translateY: interpolate(scrollOffset.value, [0, 160], [0, -8], Extrapolation.CLAMP),
       },
     ],
   }));
 
   const progressStyle = useAnimatedStyle(() => ({
-    width: interpolate(scrollY.value, [0, 280], [0, SCREEN_WIDTH], Extrapolation.CLAMP),
+    width: interpolate(scrollOffset.value, [0, 280], [0, SCREEN_WIDTH], Extrapolation.CLAMP),
   }));
 
   return {
-    scrollHandler,
     glowPrimaryStyle,
     glowSecondaryStyle,
     brandStyle,

@@ -1,10 +1,20 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useEffect } from "react";
-import { Platform, Pressable, StyleSheet, View, type ViewStyle } from "react-native";
+import { useCallback, useEffect } from "react";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type ViewStyle,
+} from "react-native";
 import Animated, {
   Easing,
+  useAnimatedRef,
   useAnimatedStyle,
+  useScrollViewOffset,
   useSharedValue,
   withRepeat,
   withTiming,
@@ -20,6 +30,7 @@ import { theme } from "@/theme/theme";
 import { useAuthScrollMotion } from "@/ui/hooks/useAuthScrollMotion";
 import { LogoMark } from "@/ui/LogoMark";
 import { AppText } from "@/ui/Primitives";
+import { AnimatedReveal } from "@/ui/form/AnimatedReveal";
 
 type AuthScreenProps = {
   title: string;
@@ -28,6 +39,8 @@ type AuthScreenProps = {
   footer?: React.ReactNode;
   showBack?: boolean;
   badge?: string;
+  /** Unique per route — replays entrance animations when navigating between auth screens. */
+  screenKey: string;
 };
 
 export function AuthScreen({
@@ -37,12 +50,17 @@ export function AuthScreen({
   footer,
   showBack = false,
   badge,
+  screenKey,
 }: AuthScreenProps) {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { height: keyboardHeight } = useReanimatedKeyboardAnimation();
 
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollViewOffset(scrollRef);
+  const screenActive = useSharedValue(1);
+
   const {
-    scrollHandler,
     glowPrimaryStyle,
     glowSecondaryStyle,
     brandStyle,
@@ -50,10 +68,30 @@ export function AuthScreen({
     cardStyle,
     footerStyle,
     progressStyle,
-  } = useAuthScrollMotion(keyboardHeight);
+  } = useAuthScrollMotion(scrollOffset, keyboardHeight, screenActive);
+
+  useFocusEffect(
+    useCallback(() => {
+      screenActive.value = 1;
+      return () => {
+        screenActive.value = 0;
+      };
+    }, [screenActive])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const scrollView = scrollRef.current as unknown as {
+        scrollTo?: (opts: { y: number; animated: boolean }) => void;
+      } | null;
+      scrollView?.scrollTo?.({ y: 0, animated: false });
+    }, [scrollRef])
+  );
+
+  const contentMinHeight = windowHeight + theme.space[8];
 
   return (
-    <View style={styles.root}>
+    <View style={styles.root} key={screenKey}>
       <LinearGradient
         colors={["#060607", "#0B0B0D", "#140B06"]}
         start={{ x: 0.15, y: 0 }}
@@ -66,15 +104,17 @@ export function AuthScreen({
       </View>
 
       <AuthGlow style={styles.glowPrimary} motionStyle={glowPrimaryStyle} />
-      <AuthGlow style={styles.glowSecondary} delay={600} motionStyle={glowSecondaryStyle} />
+      <AuthGlow style={styles.glowSecondary} delay={400} motionStyle={glowSecondaryStyle} />
 
       <KeyboardAwareScrollView
+        ref={scrollRef}
         style={styles.flex}
         contentContainerStyle={[
           styles.scrollContent,
           {
+            minHeight: contentMinHeight,
             paddingTop: insets.top + theme.space[3],
-            paddingBottom: insets.bottom + theme.space[6],
+            paddingBottom: insets.bottom + theme.space[8],
           },
         ]}
         bottomOffset={insets.bottom + theme.space[5]}
@@ -83,58 +123,69 @@ export function AuthScreen({
         keyboardDismissMode="interactive"
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
-        onScroll={scrollHandler}
         bounces
       >
         {showBack ? (
-          <Pressable
-            onPress={() => router.back()}
-            hitSlop={12}
-            style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
-          >
-            <FontAwesome name="chevron-left" size={14} color={theme.colors.text} />
-            <AppText size={13} weight="medium">
-              Back
-            </AppText>
-          </Pressable>
+          <AnimatedReveal delay={0} key={`${screenKey}-back`}>
+            <Pressable
+              onPress={() => router.back()}
+              hitSlop={12}
+              style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.7 : 1 }]}
+            >
+              <FontAwesome name="chevron-left" size={14} color={theme.colors.text} />
+              <AppText size={13} weight="medium">
+                Back
+              </AppText>
+            </Pressable>
+          </AnimatedReveal>
         ) : null}
 
         <Animated.View style={brandStyle}>
-          <View style={styles.brandRow}>
-            <LogoMark size={48} />
-            <View style={styles.brandText}>
-              <AppText size={11} weight="semibold" color={theme.colors.primary2}>
-                MINI SHOP
-              </AppText>
-              <AppText size={13} color={theme.colors.muted}>
-                Premium storefront
-              </AppText>
+          <AnimatedReveal delay={showBack ? 50 : 0} key={`${screenKey}-brand`}>
+            <View style={styles.brandRow}>
+              <LogoMark size={48} />
+              <View style={styles.brandText}>
+                <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+                  MINI SHOP
+                </AppText>
+                <AppText size={13} color={theme.colors.muted}>
+                  Premium storefront
+                </AppText>
+              </View>
             </View>
-          </View>
+          </AnimatedReveal>
         </Animated.View>
 
         <Animated.View style={[styles.header, headerStyle]}>
-          {badge ? (
-            <View style={styles.badge}>
-              <AppText size={11} weight="semibold" color={theme.colors.primary2}>
-                {badge}
-              </AppText>
-            </View>
-          ) : null}
-          <AppText size={28} weight="bold" style={styles.title}>
-            {title}
-          </AppText>
-          <AppText size={14} color={theme.colors.muted} style={styles.subtitle}>
-            {subtitle}
-          </AppText>
+          <AnimatedReveal delay={showBack ? 100 : 50} key={`${screenKey}-header`}>
+            {badge ? (
+              <View style={styles.badge}>
+                <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+                  {badge}
+                </AppText>
+              </View>
+            ) : null}
+            <AppText size={28} weight="bold" style={styles.title}>
+              {title}
+            </AppText>
+            <AppText size={14} color={theme.colors.muted} style={styles.subtitle}>
+              {subtitle}
+            </AppText>
+          </AnimatedReveal>
         </Animated.View>
 
         <Animated.View style={cardStyle}>
-          <AuthFormCard>{children}</AuthFormCard>
+          <AnimatedReveal delay={showBack ? 150 : 100} key={`${screenKey}-card`}>
+            <AuthFormCard>{children}</AuthFormCard>
+          </AnimatedReveal>
         </Animated.View>
 
         {footer ? (
-          <Animated.View style={[styles.footer, footerStyle]}>{footer}</Animated.View>
+          <Animated.View style={[styles.footer, footerStyle]}>
+            <AnimatedReveal delay={showBack ? 200 : 150} key={`${screenKey}-footer`}>
+              {footer}
+            </AnimatedReveal>
+          </Animated.View>
         ) : null}
       </KeyboardAwareScrollView>
     </View>

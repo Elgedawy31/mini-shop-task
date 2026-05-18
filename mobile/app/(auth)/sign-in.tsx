@@ -9,6 +9,7 @@ import { AppText } from "@/ui/Primitives";
 export default function SignIn() {
   return (
     <AuthScreen
+      screenKey="sign-in"
       badge="Welcome back"
       title="Sign in"
       subtitle="Access your account to browse products, manage your cart, and track orders."
