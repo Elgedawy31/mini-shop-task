@@ -11,6 +11,7 @@ import { router } from "expo-router";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { useInfiniteMyOrders } from "@/features/hooks";
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import type { Order } from "@/lib/api/models";
 import { AppText, Screen } from "@/ui/Primitives";
@@ -45,6 +46,7 @@ function OrdersHeader({
   orderCount: number;
   isFetching: boolean;
 }) {
+  const { colors } = useAppTheme();
   const headerOpacity = useSharedValue(0);
   const headerY = useSharedValue(10);
 
@@ -72,7 +74,7 @@ function OrdersHeader({
     >
       <View style={{ gap: 4 }}>
         <HStackTitle count={orderCount} isFetching={isFetching} />
-        <AppText size={12} color={theme.colors.muted}>
+        <AppText size={12} color={colors.muted}>
           Track your order history and current status.
         </AppText>
       </View>
@@ -96,6 +98,8 @@ function OrdersHeader({
 }
 
 function HStackTitle({ count, isFetching }: { count: number; isFetching: boolean }) {
+  const { colors, isDark } = useAppTheme();
+
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
       <AppText size={22} weight="bold">
@@ -107,19 +111,17 @@ function HStackTitle({ count, isFetching }: { count: number; isFetching: boolean
             paddingHorizontal: 10,
             paddingVertical: 4,
             borderRadius: 999,
-            backgroundColor: "rgba(255,122,24,0.14)",
+            backgroundColor: isDark ? "rgba(255,122,24,0.14)" : "rgba(234,88,12,0.12)",
             borderWidth: 1,
-            borderColor: "rgba(255,122,24,0.28)",
+            borderColor: isDark ? "rgba(255,122,24,0.28)" : "rgba(234,88,12,0.24)",
           }}
         >
-          <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+          <AppText size={11} weight="semibold" color={colors.primary2}>
             {count}
           </AppText>
         </View>
       ) : null}
-      {isFetching && count > 0 ? (
-        <ActivityIndicator size="small" color={theme.colors.primary2} />
-      ) : null}
+      {isFetching && count > 0 ? <ActivityIndicator size="small" color={colors.primary2} /> : null}
     </View>
   );
 }

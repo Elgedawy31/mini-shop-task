@@ -1,29 +1,80 @@
+import { useMemo } from "react";
 import { StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Animated, { FadeInDown } from "react-native-reanimated";
 
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import { AppText } from "@/ui/Primitives";
 import { AnimatedPressable } from "@/ui/form/AnimatedPressable";
 
 export function CartEmptyState() {
+  const { colors, isDark } = useAppTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          alignItems: "center",
+          paddingHorizontal: theme.space[5],
+          paddingVertical: theme.space[8],
+          gap: theme.space[5],
+          borderRadius: theme.radii.xl,
+          borderWidth: 1,
+          borderColor: colors.border,
+          backgroundColor: colors.surface,
+          overflow: "hidden",
+        },
+        glow: {
+          position: "absolute",
+          width: 200,
+          height: 200,
+          borderRadius: 999,
+          top: -80,
+          backgroundColor: isDark ? "rgba(255,122,24,0.12)" : "rgba(234,88,12,0.10)",
+        },
+        iconRing: {
+          width: 72,
+          height: 72,
+          borderRadius: 36,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: isDark ? "rgba(255,122,24,0.14)" : "rgba(234,88,12,0.12)",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.28)" : "rgba(234,88,12,0.24)",
+        },
+        copy: {
+          gap: theme.space[2],
+          maxWidth: 280,
+        },
+        cta: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          paddingHorizontal: theme.space[5],
+          paddingVertical: 14,
+          borderRadius: theme.radii.lg,
+          backgroundColor: colors.primary,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.35)" : "rgba(187,77,0,0.28)",
+        },
+      }),
+    [colors, isDark]
+  );
+
   return (
     <Animated.View entering={FadeInDown.duration(420).springify()} style={styles.wrap}>
       <View style={styles.glow} />
       <View style={styles.iconRing}>
-        <FontAwesome name="shopping-cart" size={28} color={theme.colors.primary2} />
+        <FontAwesome name="shopping-cart" size={28} color={colors.primary2} />
       </View>
 
       <View style={styles.copy}>
         <AppText size={18} weight="bold" style={{ textAlign: "center" }}>
           Your cart is empty
         </AppText>
-        <AppText
-          size={13}
-          color={theme.colors.muted}
-          style={{ textAlign: "center", lineHeight: 20 }}
-        >
+        <AppText size={13} color={colors.muted} style={{ textAlign: "center", lineHeight: 20 }}>
           Discover products in the shop and add your favorites. They will stay here until you
           checkout.
         </AppText>
@@ -38,50 +89,3 @@ export function CartEmptyState() {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    alignItems: "center",
-    paddingHorizontal: theme.space[5],
-    paddingVertical: theme.space[8],
-    gap: theme.space[5],
-    borderRadius: theme.radii.xl,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    backgroundColor: theme.colors.surface,
-    overflow: "hidden",
-  },
-  glow: {
-    position: "absolute",
-    width: 200,
-    height: 200,
-    borderRadius: 999,
-    top: -80,
-    backgroundColor: "rgba(255,122,24,0.12)",
-  },
-  iconRing: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,122,24,0.14)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.28)",
-  },
-  copy: {
-    gap: theme.space[2],
-    maxWidth: 280,
-  },
-  cta: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingHorizontal: theme.space[5],
-    paddingVertical: 14,
-    borderRadius: theme.radii.lg,
-    backgroundColor: theme.colors.primary,
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.35)",
-  },
-});

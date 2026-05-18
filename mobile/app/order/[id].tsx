@@ -4,6 +4,8 @@ import { useLocalSearchParams } from "expo-router";
 import { useOrder } from "@/features/hooks";
 import type { OrderStatus } from "@/lib/api/models";
 import { formatCompactDateTime, formatCurrency } from "@/lib/format";
+import { useAppTheme } from "@/theme/ThemeContext";
+import { mutedSurfaceFill, statusStepDotInactive, statusStepLineInactive } from "@/theme/surfaces";
 import { theme } from "@/theme/theme";
 import { AppText, Card, HStack, Screen, VStack } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
@@ -23,10 +25,12 @@ export default function OrderDetail() {
   const params = useLocalSearchParams<{ id: string; new?: string }>();
   const id = String(params.id ?? "");
   const isNew = params.new === "1";
+  const { colors, isDark } = useAppTheme();
 
   const { data: order, isLoading, isFetching, refetch } = useOrder(id);
 
   const statusIndex = order ? FLOW.indexOf(order.status) : -1;
+  const confirmedBannerBg = isDark ? "rgba(187,77,0,0.14)" : "rgba(234,88,12,0.10)";
 
   return (
     <Screen padded={false} edges={["left", "right", "bottom"]}>
@@ -44,11 +48,11 @@ export default function OrderDetail() {
         ) : order ? (
           <>
             {isNew ? (
-              <Card style={{ padding: theme.space[4], backgroundColor: "rgba(187,77,0,0.14)" }}>
+              <Card style={{ padding: theme.space[4], backgroundColor: confirmedBannerBg }}>
                 <VStack gap={6}>
                   <AppText weight="bold">Order confirmed</AppText>
-                  <AppText size={12} color={theme.colors.muted}>
-                    We’re on it. You can track status updates here.
+                  <AppText size={12} color={colors.muted}>
+                    We're on it. You can track status updates here.
                   </AppText>
                 </VStack>
               </Card>
@@ -59,17 +63,17 @@ export default function OrderDetail() {
                 <HStack justify="space-between">
                   <VStack gap={4}>
                     <AppText weight="bold">#{order.id.slice(0, 8)}</AppText>
-                    <AppText size={12} color={theme.colors.muted}>
+                    <AppText size={12} color={colors.muted}>
                       Placed {formatCompactDateTime(order.createdAt)}
                     </AppText>
                   </VStack>
                   <OrderStatusBadge status={order.status} />
                 </HStack>
 
-                <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+                <View style={{ height: 1, backgroundColor: colors.border }} />
 
                 {order.status === "cancelled" ? (
-                  <AppText size={13} color={theme.colors.muted}>
+                  <AppText size={13} color={colors.muted}>
                     This order was cancelled.
                   </AppText>
                 ) : (
@@ -88,10 +92,10 @@ export default function OrderDetail() {
                                 height: 12,
                                 borderRadius: 999,
                                 backgroundColor: active
-                                  ? theme.colors.primary2
-                                  : "rgba(255,255,255,0.12)",
+                                  ? colors.primary2
+                                  : statusStepDotInactive(isDark),
                                 borderWidth: 1,
-                                borderColor: theme.colors.border,
+                                borderColor: colors.border,
                                 marginTop: 3,
                               }}
                             />
@@ -101,8 +105,10 @@ export default function OrderDetail() {
                                   width: 2,
                                   height: 20,
                                   backgroundColor: active
-                                    ? "rgba(255,122,24,0.35)"
-                                    : "rgba(255,255,255,0.08)",
+                                    ? isDark
+                                      ? "rgba(255,122,24,0.35)"
+                                      : "rgba(234,88,12,0.35)"
+                                    : statusStepLineInactive(isDark),
                                   marginTop: 6,
                                 }}
                               />
@@ -111,7 +117,7 @@ export default function OrderDetail() {
                           <VStack gap={2} style={{ flex: 1 }}>
                             <AppText weight="semibold">{stepLabel(step)}</AppText>
                             {idx === statusIndex ? (
-                              <AppText size={12} color={theme.colors.muted}>
+                              <AppText size={12} color={colors.muted}>
                                 Current step
                               </AppText>
                             ) : null}
@@ -138,7 +144,9 @@ export default function OrderDetail() {
                           height: 58,
                           borderRadius: 16,
                           overflow: "hidden",
-                          backgroundColor: theme.colors.surface2,
+                          backgroundColor: colors.surface2,
+                          borderWidth: 1,
+                          borderColor: colors.border,
                         }}
                       >
                         {item.productImageUrl ? (
@@ -147,14 +155,19 @@ export default function OrderDetail() {
                             style={{ width: "100%", height: "100%" }}
                           />
                         ) : (
-                          <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
+                          <View
+                            style={{
+                              flex: 1,
+                              backgroundColor: mutedSurfaceFill(isDark),
+                            }}
+                          />
                         )}
                       </View>
                       <View style={{ flex: 1, gap: 4 }}>
                         <AppText weight="semibold" numberOfLines={2}>
                           {item.productName}
                         </AppText>
-                        <AppText size={12} color={theme.colors.muted}>
+                        <AppText size={12} color={colors.muted}>
                           {item.quantity} × {formatCurrency(item.unitPrice)}
                         </AppText>
                       </View>
@@ -165,10 +178,10 @@ export default function OrderDetail() {
                   ))}
                 </VStack>
 
-                <View style={{ height: 1, backgroundColor: theme.colors.border }} />
+                <View style={{ height: 1, backgroundColor: colors.border }} />
 
                 <HStack justify="space-between">
-                  <AppText size={12} color={theme.colors.muted}>
+                  <AppText size={12} color={colors.muted}>
                     Total
                   </AppText>
                   <AppText weight="bold">{formatCurrency(order.totalAmount)}</AppText>
@@ -183,7 +196,7 @@ export default function OrderDetail() {
               <AppText
                 size={12}
                 weight="medium"
-                color={theme.colors.primary2}
+                color={colors.primary2}
                 style={{ textAlign: "center" }}
               >
                 {isFetching ? "Refreshing…" : "Refresh"}
@@ -194,7 +207,7 @@ export default function OrderDetail() {
           <Card style={{ padding: theme.space[4] }}>
             <VStack gap={10}>
               <AppText weight="bold">Order not found</AppText>
-              <AppText size={12} color={theme.colors.muted}>
+              <AppText size={12} color={colors.muted}>
                 Pull to refresh or try again.
               </AppText>
             </VStack>

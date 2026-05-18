@@ -6,6 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-na
 import { useCart, type CartItem } from "@/features/cart/CartContext";
 import { useCheckout } from "@/features/hooks";
 import { useAuth } from "@/features/auth/AuthContext";
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import { AppText, Screen } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
@@ -15,6 +16,7 @@ import { CartLineItem } from "@/ui/cart/CartLineItem";
 import { CartSummaryBar } from "@/ui/cart/CartSummaryBar";
 
 function CartHeader({ itemCount }: { itemCount: number }) {
+  const { colors, isDark } = useAppTheme();
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(10);
 
@@ -50,18 +52,18 @@ function CartHeader({ itemCount }: { itemCount: number }) {
               paddingHorizontal: 10,
               paddingVertical: 4,
               borderRadius: 999,
-              backgroundColor: "rgba(255,122,24,0.14)",
+              backgroundColor: isDark ? "rgba(255,122,24,0.14)" : "rgba(234,88,12,0.12)",
               borderWidth: 1,
-              borderColor: "rgba(255,122,24,0.28)",
+              borderColor: isDark ? "rgba(255,122,24,0.28)" : "rgba(234,88,12,0.24)",
             }}
           >
-            <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+            <AppText size={11} weight="semibold" color={colors.primary2}>
               {itemCount}
             </AppText>
           </View>
         ) : null}
       </View>
-      <AppText size={12} color={theme.colors.muted}>
+      <AppText size={12} color={colors.muted}>
         {itemCount === 0
           ? "Add products from the shop to get started"
           : `${itemCount} item${itemCount === 1 ? "" : "s"} ready for checkout`}

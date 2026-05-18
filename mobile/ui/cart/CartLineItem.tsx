@@ -1,9 +1,12 @@
+import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Animated from "react-native-reanimated";
 
 import type { CartItem } from "@/features/cart/CartContext";
+import { useAppTheme } from "@/theme/ThemeContext";
+import { mutedSurfaceFill } from "@/theme/surfaces";
 import { theme } from "@/theme/theme";
 import { formatCurrency } from "@/lib/format";
 import { AppText, HStack } from "@/ui/Primitives";
@@ -25,6 +28,65 @@ export function CartLineItem({
   onIncrease,
   onRemove,
 }: CartLineItemProps) {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        card: {
+          borderRadius: theme.radii.xl,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          padding: theme.space[3],
+          gap: theme.space[3],
+        },
+        thumb: {
+          width: 80,
+          height: 80,
+          borderRadius: theme.radii.lg,
+          overflow: "hidden",
+          backgroundColor: colors.surface2,
+          borderWidth: 1,
+          borderColor: colors.border,
+        },
+        thumbImage: {
+          width: "100%",
+          height: "100%",
+        },
+        thumbPlaceholder: {
+          flex: 1,
+          backgroundColor: mutedSurfaceFill(isDark),
+        },
+        info: {
+          flex: 1,
+          gap: 6,
+        },
+        divider: {
+          height: 1,
+          backgroundColor: colors.border,
+        },
+        qtyBtn: {
+          width: 40,
+          height: 40,
+          borderRadius: 14,
+          backgroundColor: colors.surface2,
+          borderWidth: 1,
+          borderColor: colors.border,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        qtyBtnDisabled: {
+          opacity: 0.4,
+        },
+        qtyValue: {
+          minWidth: 32,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+      }),
+    [colors, isDark]
+  );
+
   const lineTotal = item.price * item.quantity;
   const fadeStyle = useFadeInUp(Math.min(index, 6) * 40, index < 8);
   const canDecrease = item.quantity > 1;
@@ -53,10 +115,10 @@ export function CartLineItem({
               <AppText size={14} weight="semibold" numberOfLines={2}>
                 {item.name}
               </AppText>
-              <AppText size={12} color={theme.colors.muted}>
+              <AppText size={12} color={colors.muted}>
                 {formatCurrency(item.price)} each
               </AppText>
-              <AppText size={15} weight="bold" color="#FFF7ED">
+              <AppText size={15} weight="bold" color={colors.text}>
                 {formatCurrency(lineTotal)}
               </AppText>
             </View>
@@ -96,8 +158,8 @@ export function CartLineItem({
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
           >
             <HStack gap={6} align="center">
-              <FontAwesome name="trash-o" size={13} color={theme.colors.danger} />
-              <AppText size={12} weight="medium" color={theme.colors.danger}>
+              <FontAwesome name="trash-o" size={13} color={colors.danger} />
+              <AppText size={12} weight="medium" color={colors.danger}>
                 Remove
               </AppText>
             </HStack>
@@ -107,57 +169,3 @@ export function CartLineItem({
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: theme.radii.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    padding: theme.space[3],
-    gap: theme.space[3],
-  },
-  thumb: {
-    width: 80,
-    height: 80,
-    borderRadius: theme.radii.lg,
-    overflow: "hidden",
-    backgroundColor: theme.colors.surface2,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  thumbImage: {
-    width: "100%",
-    height: "100%",
-  },
-  thumbPlaceholder: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.06)",
-  },
-  info: {
-    flex: 1,
-    gap: 6,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: theme.colors.border,
-  },
-  qtyBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: theme.colors.surface2,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  qtyBtnDisabled: {
-    opacity: 0.4,
-  },
-  qtyValue: {
-    minWidth: 32,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -17,7 +18,49 @@ type CartSummaryBarProps = {
 
 export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: CartSummaryBarProps) {
   const insets = useSafeAreaInsets();
-  const { colors } = useAppTheme();
+  const { colors, isDark } = useAppTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingHorizontal: theme.space[4],
+          paddingTop: theme.space[3],
+          borderTopWidth: 1,
+        },
+        card: {
+          gap: theme.space[4],
+        },
+        badge: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 6,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: 999,
+          backgroundColor: isDark ? "rgba(255,122,24,0.12)" : "rgba(234,88,12,0.10)",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.25)" : "rgba(234,88,12,0.22)",
+        },
+        checkoutBtn: {
+          height: 48,
+          borderRadius: theme.radii.lg,
+          backgroundColor: colors.primary,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.35)" : "rgba(187,77,0,0.28)",
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        checkoutBtnDisabled: {
+          opacity: 0.7,
+        },
+      }),
+    [colors, isDark]
+  );
 
   return (
     <View
@@ -36,7 +79,7 @@ export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: Car
             <AppText size={12} color={colors.muted}>
               Subtotal · {itemCount} item{itemCount === 1 ? "" : "s"}
             </AppText>
-            <AppText size={20} weight="bold" color="#FFF7ED">
+            <AppText size={20} weight="bold" color={colors.text}>
               {formatCurrency(subtotal)}
             </AppText>
           </View>
@@ -68,41 +111,3 @@ export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: Car
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: theme.space[4],
-    paddingTop: theme.space[3],
-    borderTopWidth: 1,
-  },
-  card: {
-    gap: theme.space[4],
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,122,24,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.25)",
-  },
-  checkoutBtn: {
-    height: 48,
-    borderRadius: theme.radii.lg,
-    backgroundColor: theme.colors.primary,
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.35)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkoutBtnDisabled: {
-    opacity: 0.7,
-  },
-});
