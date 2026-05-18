@@ -39,3 +39,15 @@ export function overlayGlassButton(isDark: boolean) {
 export function skeletonLineFill(isDark: boolean) {
   return isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
 }
+
+export function splashGradientColors(isDark: boolean): [string, string, string] {
+  return isDark ? ["#060607", "#0B0B0D", "#140B06"] : ["#F4F4F6", "#F8F8FA", "#FFF4EC"];
+}
+
+export function splashCardFills(isDark: boolean) {
+  return {
+    back: isDark ? "rgba(255,255,255,0.06)" : "rgba(24,24,27,0.05)",
+    mid: isDark ? "rgba(255,122,24,0.12)" : "rgba(234,88,12,0.10)",
+    front: isDark ? "rgba(187,77,0,0.18)" : "rgba(234,88,12,0.14)",
+  };
+}

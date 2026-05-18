@@ -1,5 +1,5 @@
 import { AppError } from "../errors/app-error.js";
-import { createAnonClient, createServiceClient, createUserClient } from "../lib/supabase.js";
+import { createAnonClient, createServiceClient } from "../lib/supabase.js";
 import type {
   ForgotPasswordInput,
   LoginInput,
@@ -339,7 +339,7 @@ export async function getMe(accessToken: string): Promise<AuthUser> {
 }
 
 export async function updateMe(accessToken: string, input: UpdateProfileInput): Promise<AuthUser> {
-  const supabase = createUserClient(accessToken);
+  const supabase = createAnonClient();
 
   const { data: authData, error: authUserError } = await supabase.auth.getUser(accessToken);
   if (authUserError || !authData.user) {
@@ -351,12 +351,20 @@ export async function updateMe(accessToken: string, input: UpdateProfileInput): 
   }
 
   const userId = authData.user.id;
+  const currentEmail = authData.user.email ?? "";
+  const service = createServiceClient();
 
-  if (input.email || input.password) {
-    const { error: authError } = await supabase.auth.updateUser({
-      email: input.email,
-      password: input.password,
-    });
+  // auth.updateUser() needs a browser/session client; server-side we verify JWT then use admin API.
+  const authUpdates: { email?: string; password?: string } = {};
+  if (input.email && input.email !== currentEmail) {
+    authUpdates.email = input.email;
+  }
+  if (input.password) {
+    authUpdates.password = input.password;
+  }
+
+  if (Object.keys(authUpdates).length > 0) {
+    const { error: authError } = await service.auth.admin.updateUserById(userId, authUpdates);
 
     if (authError) {
       throw new AppError({
@@ -368,7 +376,7 @@ export async function updateMe(accessToken: string, input: UpdateProfileInput): 
   }
 
   if (input.name) {
-    const { error } = await supabase.from("profiles").update({ name: input.name }).eq("id", userId);
+    const { error } = await service.from("profiles").update({ name: input.name }).eq("id", userId);
 
     if (error) {
       throw new AppError({

@@ -14,6 +14,8 @@ import Animated, {
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 
+import { useAppTheme } from "@/theme/ThemeContext";
+import { splashCardFills, splashGradientColors } from "@/theme/surfaces";
 import { theme } from "@/theme/theme";
 import { LogoMark } from "@/ui/LogoMark";
 import { AppText } from "@/ui/Primitives";
@@ -30,11 +32,48 @@ function isExpired(expiresAt?: number) {
 }
 
 export default function Splash() {
+  const { colors, isDark } = useAppTheme();
   const { session, isHydrating, refreshFromStore, setSession } = useAuth();
   const [canRoute, setCanRoute] = useState(false);
 
   const progress = useSharedValue(0);
   const cards = [useSharedValue(0), useSharedValue(0), useSharedValue(0)];
+
+  const styles = useMemo(() => {
+    const fills = splashCardFills(isDark);
+    return StyleSheet.create({
+      root: { flex: 1, backgroundColor: colors.bg },
+      logoWrap: {
+        width: 64,
+        height: 64,
+        borderRadius: 18,
+        justifyContent: "center",
+        alignItems: "center",
+      },
+      card: {
+        position: "absolute",
+        width: 220,
+        height: 140,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: colors.border,
+      },
+      cardBack: {
+        backgroundColor: fills.back,
+        transform: [{ rotate: "-10deg" }, { translateX: -22 }, { translateY: 18 }],
+      },
+      cardMid: {
+        backgroundColor: fills.mid,
+        transform: [{ rotate: "10deg" }, { translateX: 14 }, { translateY: 0 }],
+      },
+      cardFront: {
+        backgroundColor: fills.front,
+        transform: [{ rotate: "-4deg" }, { translateX: -4 }, { translateY: -18 }],
+      },
+    });
+  }, [colors.bg, colors.border, isDark]);
+
+  const gradientColors = splashGradientColors(isDark);
 
   useEffect(() => {
     progress.value = withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) });
@@ -51,7 +90,6 @@ export default function Splash() {
     (async () => {
       if (isHydrating) return;
 
-      // If token looks expired, try a refresh once (silent).
       const stored = await sessionStore.load();
       if (stored?.token && isExpired(stored.expiresAt) && stored.refreshToken) {
         const refreshed = await apiClient.post<AuthSessionPayload>("/auth/refresh", {
@@ -119,7 +157,7 @@ export default function Splash() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={["#060607", "#0B0B0D", "#140B06"]}
+        colors={gradientColors}
         start={{ x: 0.2, y: 0 }}
         end={{ x: 0.8, y: 1 }}
         style={StyleSheet.absoluteFill}
@@ -146,7 +184,7 @@ export default function Splash() {
           <AppText size={18} weight="bold">
             Mini Shop
           </AppText>
-          <AppText size={12} color={theme.colors.muted} style={{ marginTop: 6 }}>
+          <AppText size={12} color={colors.muted} style={{ marginTop: 6 }}>
             Shop fast. Track orders. Stay in control.
           </AppText>
         </Animated.View>
@@ -154,34 +192,3 @@ export default function Splash() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: theme.colors.bg },
-  logoWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  card: {
-    position: "absolute",
-    width: 220,
-    height: 140,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cardBack: {
-    backgroundColor: "rgba(255,255,255,0.06)",
-    transform: [{ rotate: "-10deg" }, { translateX: -22 }, { translateY: 18 }],
-  },
-  cardMid: {
-    backgroundColor: "rgba(255,122,24,0.12)",
-    transform: [{ rotate: "10deg" }, { translateX: 14 }, { translateY: 0 }],
-  },
-  cardFront: {
-    backgroundColor: "rgba(187,77,0,0.18)",
-    transform: [{ rotate: "-4deg" }, { translateX: -4 }, { translateY: -18 }],
-  },
-});

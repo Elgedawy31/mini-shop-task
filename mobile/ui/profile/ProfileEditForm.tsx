@@ -51,13 +51,23 @@ export function ProfileEditForm({ user, onUpdated }: ProfileEditFormProps) {
       return;
     }
 
-    const payload: { name?: string; email?: string; password?: string } = {
-      name: values.name.trim(),
-      email: values.email.trim(),
-    };
+    const trimmedName = values.name.trim();
+    const trimmedEmail = values.email.trim();
+    const payload: { name?: string; email?: string; password?: string } = {};
 
+    if (trimmedName !== user.name) {
+      payload.name = trimmedName;
+    }
+    if (trimmedEmail !== user.email) {
+      payload.email = trimmedEmail;
+    }
     if (values.password?.trim()) {
       payload.password = values.password.trim();
+    }
+
+    if (!payload.name && !payload.email && !payload.password) {
+      toast("info", "No changes", "Update a field before saving.");
+      return;
     }
 
     const res = await api.auth.updateMe(payload);
