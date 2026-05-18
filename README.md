@@ -81,10 +81,22 @@ Set `VITE_API_BASE_URL` before `bun run build:dashboard` when the API is not on 
 
 ---
 
+## Database (Supabase CLI)
+
+```bash
+bunx supabase login
+bun run db:link    # project sejiiywghkekfvcdqkec
+bun run db:push    # apply migrations
+bun run db:seed    # test users + products
+```
+
+See [supabase/README.md](supabase/README.md).
+
 ## Documentation
 
 - [Dashboard README](dashboard/README.md) — admin UI setup, features, structure
 - [Backend README](backend/README.md) — API setup and route contract
+- [Supabase README](supabase/README.md) — migrations, `db push`, link
 
 ---
 

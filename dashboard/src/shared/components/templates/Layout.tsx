@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Header } from "../organisms/Header";
 import { Sidebar } from "../organisms/Sidebar";
 import { useScrollToTop } from "@/shared/hooks/useScrollToTop";
+import { cn } from "@/shared/utils/cn";
 
 interface NavigationItem {
   name: string;
@@ -35,7 +36,8 @@ export function Layout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Default logo click behavior - navigate to dashboard
+  const hasSidebar = showSidebar && navigation.length > 0;
+
   const handleLogoClick = () => {
     if (onLogoClick) {
       onLogoClick();
@@ -46,9 +48,8 @@ export function Layout({
   };
 
   return (
-    <div className={`min-h-screen bg-background pt-7 pr-7 ${className}`}>
-      {/* Sidebar */}
-      {showSidebar && navigation.length > 0 && (
+    <div className={cn("min-h-screen bg-background pt-7 pr-7", className)}>
+      {hasSidebar && (
         <Sidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -58,13 +59,23 @@ export function Layout({
         />
       )}
 
-      {/* Main content */}
-      <div className={showSidebar && navigation.length > 0 ? `lg:pl-64 ml-7` : ""}>
-        {/* Header */}
-        {showHeader && <Header onMenuClick={() => setSidebarOpen(true)} className={headerHeight} />}
+      <div className={hasSidebar ? "lg:pl-64 ml-7" : ""}>
+        {showHeader && (
+          <Header
+            onMenuClick={() => setSidebarOpen(true)}
+            className={headerHeight}
+            withSidebar={hasSidebar}
+          />
+        )}
 
-        {/* Page content */}
-        <main className="!px-0 p-4 sm:p-6">{children}</main>
+        <main
+          className={cn(
+            "p-4 sm:p-6",
+            showHeader && "pt-[calc(1.75rem+3.5rem+0.75rem)] sm:pt-[calc(1.75rem+4rem+0.75rem)]"
+          )}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

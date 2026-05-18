@@ -18,6 +18,11 @@
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\"",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json,md,css,html,yml,yaml}\"",
     "test": "bun --cwd dashboard test && bun --cwd backend test",
+    "db:link": "bunx supabase link --project-ref sejiiywghkekfvcdqkec",
+    "db:push": "bunx supabase db push",
+    "db:migration": "bunx supabase migration new",
+    "db:status": "bunx supabase migration list",
+    "db:seed": "bun --cwd backend seed",
     "prepare": "husky"
   },
   "lint-staged": {

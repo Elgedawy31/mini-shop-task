@@ -14,8 +14,15 @@ REST API for the **Mini Shop** challenge: **Fastify 5**, **TypeScript**, **Supab
 
 ### 1. Supabase project
 
-1. Create a project at [supabase.com](https://supabase.com).
-2. Run the SQL migration: [`../supabase/migrations/001_initial.sql`](../supabase/migrations/001_initial.sql) in **SQL Editor**.
+1. Create a project at [supabase.com](https://supabase.com) (ref: `sejiiywghkekfvcdqkec`).
+2. Apply migrations via CLI (see [`../supabase/README.md`](../supabase/README.md)):
+
+   ```bash
+   bunx supabase login
+   bun run db:link      # enter DB password when prompted
+   bun run db:push
+   ```
+
 3. **Auth → Providers → Email**: disable “Confirm email” for local dev (or handle confirmation in the app).
 4. **Storage**: create a public bucket named `product-images` (or set `STORAGE_BUCKET` in `.env`).
 5. **Database → Replication**: add `orders` to the `supabase_realtime` publication (for mobile live updates).

@@ -1,5 +1,5 @@
 -- Mini Shop — initial schema, RLS, and helpers
--- Run in Supabase SQL Editor or via Supabase CLI
+-- Apply with: supabase db push (after supabase link)
 
 -- Extensions
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -289,5 +289,4 @@ CREATE POLICY order_items_insert ON public.order_items
     )
   );
 
--- Realtime for orders (run after enabling replication in dashboard)
--- ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+-- Realtime: see 20260518120001_storage_realtime.sql

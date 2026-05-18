@@ -10,12 +10,14 @@ import React from "react";
 interface HeaderProps {
   onMenuClick: () => void;
   className?: string;
+  /** When true, offset left edge for desktop sidebar (lg:w-64 + main ml-7) */
+  withSidebar?: boolean;
 }
 
 const iconButtonClass =
   "h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground hover:bg-accent";
 
-export function Header({ onMenuClick, className }: HeaderProps) {
+export function Header({ onMenuClick, className, withSidebar = false }: HeaderProps) {
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = React.useState(false);
   const { data: user } = useVerifyUser();
@@ -27,9 +29,10 @@ export function Header({ onMenuClick, className }: HeaderProps) {
   return (
     <header
       className={cn(
-        "top-7 z-40 flex h-14 sm:h-16 px-3 sm:px-4 lg:px-6 p-10 rounded-2xl items-center justify-between",
-        "border-b border-border bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80",
-        "shadow-sm",
+        "fixed top-7 z-40 right-7 flex h-14 sm:h-16 shrink-0 items-center justify-between",
+        "rounded-2xl border border-border px-3 sm:px-4 lg:px-6",
+        "bg-background/90 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/80",
+        withSidebar ? "left-0 lg:left-[calc(16rem+1.75rem)]" : "left-7",
         className
       )}
     >
