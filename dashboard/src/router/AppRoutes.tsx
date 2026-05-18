@@ -29,7 +29,7 @@ export function AppRoutes() {
             path="*"
             element={
               // <ProtectedRoute>
-              <Layout navigation={navigation} title="Central Hub" showSidebar showHeader>
+              <Layout navigation={navigation} title="Mini Shop" showSidebar showHeader>
                 <Routes>
                   <Route path="/dashboard" element={<DashboardPage />} />
 

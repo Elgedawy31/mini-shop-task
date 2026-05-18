@@ -4,7 +4,7 @@ import { Mail } from "lucide-react";
 import { InputWithIcon } from "@/shared/components/molecules/InputWithIcon";
 import { PasswordInput } from "@/shared/components/molecules/PasswordInput";
 import { Button } from "@/shared/components/atoms/button";
-import Logo from "@/assets/Logo.png";
+import { MemoizedLogo } from "@/shared/components/atoms/Logo";
 import { loginSchema, type LoginFormData } from "..";
 import { Link } from "react-router-dom";
 
@@ -24,24 +24,16 @@ function LoginForm({
   });
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center  py-12">
-      <div className="w-full  space-y-8">
-        {/* Logo */}
-        <div className="flex ">
-          <img src={Logo} alt="Dev Global Logo" className="h-10 w-auto" />
+    <div className="flex-1 flex flex-col items-center justify-center py-12">
+      <div className="w-full space-y-8">
+        <MemoizedLogo size="lg" text="Mini Shop" showText />
+
+        <div className="space-y-4">
+          <h1 className="text-4xl font-bold text-gray-900">Admin sign in</h1>
+          <p className="text-gray-600">Sign in to manage products, orders, and shop analytics.</p>
         </div>
 
-        {/* Header */}
-        <div className=" space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">Sign in</h1>
-          <p className="text-gray-600">
-            Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-          </p>
-        </div>
-
-        {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Email Field */}
           <div className="space-y-2">
             <label htmlFor="email" className="block text-sm font-medium text-gray-900">
               Email Address
@@ -58,7 +50,6 @@ function LoginForm({
             {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
           </div>
 
-          {/* Password Field */}
           <div className="space-y-2">
             <label htmlFor="password" className="block text-sm font-medium text-gray-900">
               Password
@@ -72,7 +63,6 @@ function LoginForm({
             {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
           </div>
 
-          {/* Submit Button */}
           <Button
             type="submit"
             disabled={isPending}
@@ -81,7 +71,7 @@ function LoginForm({
             {isPending ? "Signing in..." : "Login"}
           </Button>
         </form>
-        {/* Sign Up Link */}
+
         <p className="mt-6 text-center text-sm text-gray-600">
           Don’t have an account?
           <Link to="/sign-up" className="font-medium text-primary-600 hover:underline">

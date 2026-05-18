@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from "react";
+import React, { useCallback } from "react";
+import { Store } from "lucide-react";
 import { cn } from "../../utils/cn";
 
 interface LogoProps {
@@ -14,7 +15,15 @@ const sizeClasses = {
   md: "h-8 w-8",
   lg: "h-10 w-10",
   xl: "h-12 w-12",
-  full: "w-full",
+  full: "h-10 w-10",
+};
+
+const iconSizeClasses = {
+  sm: "h-3 w-3",
+  md: "h-4 w-4",
+  lg: "h-5 w-5",
+  xl: "h-6 w-6",
+  full: "h-5 w-5",
 };
 
 const textSizeClasses = {
@@ -22,56 +31,19 @@ const textSizeClasses = {
   md: "text-base",
   lg: "text-lg",
   xl: "text-xl",
+  full: "text-lg",
 };
 
 export function Logo({
   size = "md",
   className,
   showText = true,
-  text = "Central Hub",
+  text = "Mini Shop",
   onClick,
 }: LogoProps) {
-  const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const handleImageLoad = useCallback(() => {
-    setIsLoading(false);
-  }, []);
-
-  const handleImageError = useCallback(() => {
-    setImageError(true);
-    setIsLoading(false);
-  }, []);
-
   const handleClick = useCallback(() => {
     onClick?.();
   }, [onClick]);
-
-  // Fallback component when image fails to load
-  const FallbackLogo = () => (
-    <div
-      className={cn(
-        sizeClasses[size],
-        "rounded-lg flex items-center justify-center font-bold text-primary-foreground",
-        "bg-primary shadow-sm",
-        "dark:bg-primary"
-      )}
-    >
-      <span
-        className={cn(
-          size === "sm"
-            ? "text-xs"
-            : size === "md"
-              ? "text-sm"
-              : size === "lg"
-                ? "text-base"
-                : "text-lg"
-        )}
-      >
-        C
-      </span>
-    </div>
-  );
 
   return (
     <div
@@ -94,39 +66,22 @@ export function Logo({
           : undefined
       }
     >
-      {/* Logo Image */}
-      <div className="relative">
-        {/* Loading skeleton */}
-        {isLoading && !imageError && (
-          <div
-            className={cn(sizeClasses[size], "bg-muted animate-pulse rounded-lg", "dark:bg-muted")}
-          />
+      <div
+        className={cn(
+          sizeClasses[size],
+          "rounded-lg flex items-center justify-center bg-primary text-primary-foreground shadow-sm shrink-0"
         )}
-
-        {/* Actual logo image */}
-        {!imageError && (
-          <img
-            src="/logo.png"
-            alt={`${text} Logo`}
-            className={cn(sizeClasses[size], "object-contain rounded-lg", isLoading && "opacity-0")}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading="eager" // Load immediately since it's likely above the fold
-            decoding="async"
-          />
-        )}
-
-        {/* Fallback logo */}
-        {imageError && <FallbackLogo />}
+        aria-hidden
+      >
+        <Store className={iconSizeClasses[size]} />
       </div>
 
-      {/* Logo Text */}
       {showText && (
         <span
           className={cn(
-            "font-semibold text-foreground dark:text-foreground",
+            "font-semibold text-foreground truncate",
             textSizeClasses[size],
-            "hidden sm:block" // Hide on mobile by default
+            size !== "full" && "hidden sm:block"
           )}
         >
           {text}
@@ -136,5 +91,4 @@ export function Logo({
   );
 }
 
-// Memoized version for better performance
 export const MemoizedLogo = React.memo(Logo);

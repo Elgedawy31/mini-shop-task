@@ -24,7 +24,7 @@ interface LayoutProps {
 export function Layout({
   children,
   navigation = [],
-  title = "Central Hub",
+  title = "Mini Shop",
   showSidebar = true,
   showHeader = true,
   headerHeight = "h-16",

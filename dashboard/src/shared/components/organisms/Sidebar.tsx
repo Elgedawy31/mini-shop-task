@@ -25,7 +25,7 @@ export function Sidebar({
   isOpen,
   onClose,
   navigation,
-  title = "Central Hub",
+  title = "Mini Shop",
   className,
   onLogoClick,
 }: SidebarProps) {
@@ -120,7 +120,7 @@ export function Sidebar({
             {/* Footer */}
             <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-border dark:border-border bg-surface dark:bg-surface">
               <div className="text-xs text-muted-foreground dark:text-muted-foreground text-center font-medium">
-                Built with ❤️ using Central Hub
+                Mini Shop Admin
               </div>
             </div>
           </div>
