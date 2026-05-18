@@ -1,24 +1,34 @@
-FROM oven/bun:1.1 AS base
+FROM oven/bun:1.2.18 AS base
 WORKDIR /app
+ENV HUSKY=0
 
 FROM base AS development
-COPY package.json ./
-RUN bun install
-COPY . .
+COPY package.json bun.lock ./
+COPY dashboard/package.json ./dashboard/package.json
+COPY backend/package.json ./backend/package.json
+RUN bun install --frozen-lockfile
+COPY backend ./backend
+WORKDIR /app/backend
 EXPOSE 4000
 CMD ["bun", "dev"]
 
 FROM base AS build
-COPY package.json tsconfig.json ./
-RUN bun install
-COPY src ./src
+COPY package.json bun.lock ./
+COPY dashboard/package.json ./dashboard/package.json
+COPY backend/package.json ./backend/package.json
+RUN bun install --frozen-lockfile
+COPY backend ./backend
+WORKDIR /app/backend
 RUN bun run build
 
-FROM oven/bun:1.1-slim AS production
+FROM oven/bun:1.2.18-slim AS production
 WORKDIR /app
 ENV NODE_ENV=production
-COPY --from=build /app/package.json ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
+COPY package.json bun.lock ./
+COPY dashboard/package.json ./dashboard/package.json
+COPY backend/package.json ./backend/package.json
+RUN bun install --production --frozen-lockfile --ignore-scripts
+COPY --from=build /app/backend/dist ./backend/dist
+WORKDIR /app/backend
 EXPOSE 4000
 CMD ["bun", "dist/server.js"]
