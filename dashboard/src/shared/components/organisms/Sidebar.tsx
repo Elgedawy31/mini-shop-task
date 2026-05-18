@@ -135,13 +135,11 @@ export function Sidebar({
           className
         )}
       >
-        <div className="flex items-center h-16 px-10 pt-14 pb-14 bg-white dark:bg-gray-900">
+        <div className="flex items-center h-16 px-10 pt-14 pb-14 bg-sidebar">
           <MemoizedLogo size="full" text={title} showText={false} onClick={onLogoClick} />
         </div>
-        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-4rem)] bg-white dark:bg-gray-900">
-          <span className="inline-flex font-semibold pb-1 text-gray-800 dark:text-gray-100">
-            Menu
-          </span>
+        <nav className="p-4 space-y-2 overflow-y-auto h-[calc(100vh-4rem)] bg-sidebar">
+          <span className="inline-flex font-semibold pb-1 text-sidebar-foreground">Menu</span>
           {navigation.map((item) => {
             const isActive = location.pathname === item.href;
             return (

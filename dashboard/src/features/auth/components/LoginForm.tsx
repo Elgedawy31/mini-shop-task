@@ -29,13 +29,15 @@ function LoginForm({
         <MemoizedLogo size="lg" text="Mini Shop" showText />
 
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold text-gray-900">Admin sign in</h1>
-          <p className="text-gray-600">Sign in to manage products, orders, and shop analytics.</p>
+          <h1 className="text-4xl font-bold text-foreground">Admin sign in</h1>
+          <p className="text-muted-foreground">
+            Sign in to manage products, orders, and shop analytics.
+          </p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-900">
+            <label htmlFor="email" className="block text-sm font-medium text-foreground">
               Email Address
             </label>
             <InputWithIcon
@@ -51,7 +53,7 @@ function LoginForm({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-900">
+            <label htmlFor="password" className="block text-sm font-medium text-foreground">
               Password
             </label>
             <PasswordInput
@@ -66,15 +68,15 @@ function LoginForm({
           <Button
             type="submit"
             disabled={isPending}
-            className="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium py-3 px-4 rounded-md transition-colors"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium py-3 px-4 rounded-md transition-colors"
           >
             {isPending ? "Signing in..." : "Login"}
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           Don’t have an account?
-          <Link to="/sign-up" className="font-medium text-primary-600 hover:underline">
+          <Link to="/sign-up" className="font-medium text-primary hover:underline">
             {" "}
             Sign up
           </Link>
