@@ -70,7 +70,6 @@ export function Layout({
 
         <main
           className={cn(
-            "p-4 sm:p-6",
             showHeader && "pt-[calc(1.75rem+3.5rem+0.75rem)] sm:pt-[calc(1.75rem+4rem+0.75rem)]"
           )}
         >
