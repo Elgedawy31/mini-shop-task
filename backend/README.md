@@ -31,10 +31,10 @@ REST API for the **Mini Shop** challenge: **Fastify 5**, **TypeScript**, **Supab
 ### 2. Environment
 
 ```bash
-cp .env.example .env
+cp .env.example .env   # skip if you already have a working backend/.env
 ```
 
-Fill in from **Project Settings → API**:
+Fill in from **Project Settings → API** (or keep your existing values):
 
 ```bash
 SUPABASE_URL=https://xxxx.supabase.co
@@ -194,4 +194,5 @@ supabase
 
 - [Supabase migrations](supabase/README.md)
 - [Root README](../README.md)
+- [Mobile README](../mobile/README.md)
 - [Dashboard README](../dashboard/README.md)

@@ -1,19 +1,19 @@
 # Mini Shop — Admin Dashboard
 
-Professional web admin for the **Mini Shop** full-stack challenge. Store operators sign in here to monitor KPIs, manage the product catalogue, and fulfil orders from the mobile storefront.
+Web admin for the **Mini Shop** challenge: KPIs, product catalogue management, and order fulfilment. Connects to the Fastify API on **5001** and optionally to Supabase Realtime for live order updates.
 
-Part of a **multi-app Bun repo** with no Docker: dashboard on **port 5000**, API on **port 5001**.
+Part of a **multi-app repo** with no Docker: dashboard **5000**, API **5001**, mobile via Expo.
 
 ---
 
 ## System context
 
-| Layer                          | Technology                                       | Local URL                 |
-| ------------------------------ | ------------------------------------------------ | ------------------------- |
-| **Admin dashboard** (this app) | React 19 · Vite 7 · TypeScript · Tailwind CSS v4 | http://localhost:**5000** |
-| Backend API                    | Fastify 5 · TypeScript · Bun                     | http://localhost:**5001** |
-| Mobile app _(planned)_         | Expo · React Native                              | —                         |
-| Data & auth                    | Supabase (PostgreSQL · Auth · Storage)           | Cloud project             |
+| Layer                          | Technology                                   | Local URL                 |
+| ------------------------------ | -------------------------------------------- | ------------------------- |
+| **Admin dashboard** (this app) | React 19 · Vite 7 · TypeScript · Tailwind v4 | http://localhost:**5000** |
+| Backend API                    | Fastify 5 · TypeScript · Bun                 | http://localhost:**5001** |
+| Mobile storefront              | Expo · React Native                          | Expo Go / simulator       |
+| Data & auth                    | Supabase (PostgreSQL · Auth · Storage)       | Cloud project             |
 
 ```text
 ┌─────────────┐     REST + JWT      ┌─────────────┐     Supabase SDK     ┌──────────┐
@@ -29,28 +29,30 @@ Part of a **multi-app Bun repo** with no Docker: dashboard on **port 5000**, API
 
 ---
 
-## Features (Mini Shop task — Part 3)
+## Features
 
-| Area               | Capability                                                                            |
-| ------------------ | ------------------------------------------------------------------------------------- |
-| **Authentication** | First-run admin setup (Payload-style) when no admins exist; then email/password login |
-| **Dashboard**      | KPI cards: orders today, revenue today, active products                               |
-| **Products**       | Table with create / edit / toggle active; image upload _(planned)_                    |
-| **Orders**         | Status filter, update status, detail view _(planned)_                                 |
-| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme                 |
-| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files              |
+| Area               | Capability                                                                              |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| **Authentication** | First-run admin setup when no admin exists; then email/password login (admin role only) |
+| **Dashboard**      | KPI cards: orders today, revenue today, active products                                 |
+| **Products**       | Table with search/filter, create / edit, image upload, toggle active, soft delete       |
+| **Orders**         | Status filter, paginated table, update status, detail dialog; optional Realtime sync    |
+| **Analytics**      | Revenue and orders charts (extra)                                                       |
+| **Settings**       | Profile preferences                                                                     |
+| **UX**             | Sidebar layout, responsive shell, skeletons, toasts (Sonner), dark/light theme          |
 
 ### Implementation status
 
-| Feature                              | Status  |
-| ------------------------------------ | ------- |
-| App shell, sidebar, header, theme    | Done    |
-| First admin setup (`/setup`) + login | Done    |
-| Login UI + auth service + admin gate | Done    |
-| Protected routes                     | Done    |
-| Dashboard KPIs (`/dashboard/stats`)  | Done    |
-| Products CRUD pages                  | Planned |
-| Orders management pages              | Planned |
+| Feature                              | Status                      |
+| ------------------------------------ | --------------------------- |
+| App shell, sidebar, header, theme    | Done                        |
+| First admin setup (`/setup`) + login | Done                        |
+| Admin-only login gate                | Done                        |
+| Protected routes                     | Done                        |
+| Dashboard KPIs                       | Done                        |
+| Products CRUD + image upload         | Done                        |
+| Orders management + status updates   | Done                        |
+| Order Realtime (optional env)        | Done when Supabase vars set |
 
 ---
 
@@ -64,11 +66,10 @@ Part of a **multi-app Bun repo** with no Docker: dashboard on **port 5000**, API
 
 ## Quick start
 
-From inside **`dashboard/`**:
-
 ```bash
 cd dashboard
 bun install
+cp .env.example .env.development   # skip if you already have this file
 bun dev
 ```
 
@@ -78,40 +79,48 @@ bun dev
 | http://localhost:5001        | Backend API     |
 | http://localhost:5001/health | Health check    |
 
-From the repo root, you can still start the dashboard with:
-
-```bash
-bun dev:dashboard
-```
+From repo root: `bun dev:dashboard` or `bun dev` (dashboard + backend).
 
 ### First admin (fresh database)
 
-When no admin exists in `profiles`, open **http://localhost:5000/setup** and create the store owner account (name, email, password). The API only allows this once; afterward everyone signs in at `/sign-in`.
+When no admin exists in `profiles`, open **http://localhost:5000/setup** and create the store owner account. The API only allows this once.
 
 ### Test admin login (seeded database)
 
-After `bun --cwd backend run seed`, setup is skipped and you sign in directly:
+After `bun --cwd backend run seed`:
 
 | Field    | Value                 |
 | -------- | --------------------- |
 | Email    | `admin@minishop.test` |
 | Password | `Admin12345!`         |
 
+Non-admin accounts are rejected at login.
+
 ---
 
 ## Environment
 
-| Variable            | Default                 | Purpose              |
-| ------------------- | ----------------------- | -------------------- |
-| `VITE_API_BASE_URL` | `http://localhost:5001` | Fastify API base URL |
+**If you already have `dashboard/.env.development`:** you only need `VITE_API_BASE_URL=http://localhost:5001` for local development. No change required if that works.
 
-Create **`dashboard/.env.development`** to override:
+Copy the template when setting up a new machine:
 
 ```bash
-VITE_API_BASE_URL=http://localhost:5001
+cp .env.example .env.development
 ```
 
-Template: [`.env.example`](.env.example).
+| Variable                 | Default                 | Purpose                                    |
+| ------------------------ | ----------------------- | ------------------------------------------ |
+| `VITE_API_BASE_URL`      | `http://localhost:5001` | Fastify API base URL                       |
+| `VITE_SUPABASE_URL`      | _(empty)_               | Optional — Realtime on Orders page         |
+| `VITE_SUPABASE_ANON_KEY` | _(empty)_               | Optional — same anon key as `backend/.env` |
+
+Realtime is **optional**. Without Supabase vars, orders still load and update via the API; the queue simply won’t auto-refresh on database changes.
+
+For production:
+
+```bash
+VITE_API_BASE_URL=https://api.your-domain.com bun run build
+```
 
 ---
 
@@ -133,15 +142,17 @@ From repo root: `bun lint`, `bun run build`.
 dashboard/
 ├── src/
 │   ├── features/
-│   │   ├── auth/           # Login, hooks, authService
-│   │   └── dashboard/      # KPI page, stats service
+│   │   ├── auth/           # Login, setup, session
+│   │   ├── dashboard/      # KPI page
+│   │   ├── products/       # CRUD + upload
+│   │   ├── orders/         # Queue + detail + Realtime
+│   │   └── analytics/      # Charts
 │   ├── shared/
-│   │   ├── components/     # Design system (atoms → templates)
-│   │   ├── config/api.ts   # Endpoints aligned with backend
-│   │   └── services/       # apiClient, errorHandler
+│   │   ├── components/     # Design system
+│   │   ├── config/api.ts   # Endpoints
+│   │   └── services/       # apiClient, Realtime
 │   └── router/AppRoutes.tsx
-├── index.html              # Inline SVG favicon (no logo.png)
-└── vite.config.ts          # port 5000, strictPort
+└── vite.config.ts            # port 5000
 ```
 
 ---
@@ -150,9 +161,11 @@ dashboard/
 
 Configured in `src/shared/config/api.ts`:
 
-- **Auth:** `/auth/setup/status`, `/auth/setup`, `/auth/login`, `/auth/me`
-- **Dashboard:** `/dashboard/stats`
-- **Products / orders:** wired when pages are added
+- **Auth:** `/auth/setup/status`, `/auth/setup`, `/auth/login`, `/auth/me`, `/auth/refresh`
+- **Dashboard:** `/dashboard/stats`, overview and chart endpoints
+- **Products:** CRUD + `/products/upload-image`
+- **Orders:** list, detail, `/orders/:id/status`
+- **Categories:** `/categories`
 
 Responses: success `{ success, data }` · errors `{ statusCode, error, message }`.
 
@@ -161,25 +174,13 @@ Responses: success `{ success, data }` · errors `{ statusCode, error, message }
 ## Design system
 
 - **Font:** Poppins
-- **UI:** Tailwind v4 semantic tokens, Radix primitives, Lucide icons
-- **Logo:** `src/shared/components/atoms/Logo.tsx` (icon + wordmark)
-
----
-
-## Production build
-
-```bash
-VITE_API_BASE_URL=https://api.your-domain.com bun run build:dashboard
-bun --cwd dashboard preview
-```
+- **UI:** Tailwind v4, Radix primitives, Lucide icons
+- **Logo:** `src/shared/components/atoms/Logo.tsx`
 
 ---
 
 ## Related docs
 
-- [Root README](../README.md) — monorepo, ports, no-Docker workflow
-- [Backend README](../backend/README.md) — API, Supabase, seed data
-
----
-
-Built for the **Mini Shop** developer challenge: mobile storefront, REST API, admin dashboard, Supabase.
+- [Root README](../README.md) — monorepo, env matrix, test accounts
+- [Backend README](../backend/README.md) — API, Supabase, seed
+- [Mobile README](../mobile/README.md) — Expo storefront
