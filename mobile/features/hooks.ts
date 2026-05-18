@@ -1,4 +1,10 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { api } from "./api";
 import type { Order } from "@/lib/api/models";
 import { toast } from "@/ui/Toast";
@@ -49,6 +55,7 @@ export function useInfiniteProducts(params: { limit: number; search?: string; ca
       return res.data;
     },
     initialPageParam: 1,
+    placeholderData: keepPreviousData,
     getNextPageParam: (lastPage) => {
       const { page, limit, total } = lastPage.pagination;
       const totalPages = Math.max(1, Math.ceil(total / limit));

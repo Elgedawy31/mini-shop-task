@@ -1,18 +1,24 @@
-import { useMemo, useState } from "react";
-import { Image, Pressable, ScrollView, View } from "react-native";
+import { useState } from "react";
+import { Image, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useProduct } from "@/features/hooks";
 import { useCart } from "@/features/cart/CartContext";
 import { theme } from "@/theme/theme";
 import { formatCurrency } from "@/lib/format";
-import { AppText, Button, Card, HStack, Screen, VStack } from "@/ui/Primitives";
+import { AppText, Button, Card, HStack, VStack } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
 import { toast } from "@/ui/Toast";
+import { ProductDetailBackButton } from "@/ui/shop/ProductDetailBackButton";
+
+const HERO_HEIGHT = 380;
 
 export default function ProductDetail() {
   const params = useLocalSearchParams<{ id: string }>();
   const id = String(params.id ?? "");
+  const insets = useSafeAreaInsets();
   const { data, isLoading, refetch, isFetching } = useProduct(id);
   const cart = useCart();
 
@@ -20,38 +26,49 @@ export default function ProductDetail() {
 
   const product = data;
   const canAdd = Boolean(product) && qty > 0;
-
   const canDec = qty > 1;
   const canInc = qty < 20;
 
   return (
-    <Screen padded={false} edges={["left", "right", "bottom"]}>
+    <View style={styles.root}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 120 + insets.bottom }}
         showsVerticalScrollIndicator={false}
+        bounces
       >
         {isLoading ? (
-          <View style={{ padding: theme.space[4], gap: 12 }}>
-            <Skeleton height={280} style={{ borderRadius: theme.radii.xl }} />
-            <Skeleton height={24} />
-            <Skeleton height={18} style={{ width: "70%" }} />
-            <Skeleton height={120} style={{ borderRadius: theme.radii.xl }} />
+          <View style={styles.hero}>
+            <Skeleton height={HERO_HEIGHT} style={{ borderRadius: 0 }} />
           </View>
-        ) : product ? (
+        ) : null}
+
+        {!isLoading && product ? (
           <>
-            <View style={{ height: 320, backgroundColor: theme.colors.surface2 }}>
+            <View style={styles.hero}>
               {product.imageUrl ? (
                 <Image
                   source={{ uri: product.imageUrl }}
-                  style={{ width: "100%", height: "100%" }}
+                  style={styles.heroImage}
                   resizeMode="cover"
                 />
               ) : (
-                <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
+                <View style={styles.heroPlaceholder} />
               )}
+
+              <LinearGradient
+                colors={["rgba(11,11,13,0.72)", "rgba(11,11,13,0.2)", "transparent"]}
+                locations={[0, 0.45, 1]}
+                style={[styles.heroTopFade, { height: insets.top + 88 }]}
+                pointerEvents="none"
+              />
+              <LinearGradient
+                colors={["transparent", "rgba(11,11,13,0.95)"]}
+                style={styles.heroBottomFade}
+                pointerEvents="none"
+              />
             </View>
 
-            <View style={{ padding: theme.space[4], gap: 16 }}>
+            <View style={styles.content}>
               <VStack gap={8}>
                 <AppText size={22} weight="bold">
                   {product.name}
@@ -133,8 +150,10 @@ export default function ProductDetail() {
               </Card>
             </View>
           </>
-        ) : (
-          <View style={{ padding: theme.space[4] }}>
+        ) : null}
+
+        {!isLoading && !product ? (
+          <View style={[styles.content, { paddingTop: insets.top + 72 }]}>
             <Card>
               <VStack gap={10}>
                 <AppText weight="bold">Product not found</AppText>
@@ -149,20 +168,26 @@ export default function ProductDetail() {
               </VStack>
             </Card>
           </View>
-        )}
+        ) : null}
+
+        {isLoading ? (
+          <View style={styles.content}>
+            <Skeleton height={24} />
+            <Skeleton height={18} style={{ width: "70%" }} />
+            <Skeleton height={120} style={{ borderRadius: theme.radii.xl }} />
+          </View>
+        ) : null}
       </ScrollView>
 
+      <ProductDetailBackButton />
+
       <View
-        style={{
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          padding: theme.space[4],
-          backgroundColor: "rgba(11,11,13,0.92)",
-          borderTopWidth: 1,
-          borderTopColor: theme.colors.border,
-        }}
+        style={[
+          styles.footer,
+          {
+            paddingBottom: theme.space[4] + insets.bottom,
+          },
+        ]}
       >
         <Button
           label={canAdd ? "Add to cart" : "Loading…"}
@@ -174,6 +199,53 @@ export default function ProductDetail() {
           }}
         />
       </View>
-    </Screen>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: theme.colors.bg,
+  },
+  hero: {
+    height: HERO_HEIGHT,
+    backgroundColor: theme.colors.surface2,
+  },
+  heroImage: {
+    width: "100%",
+    height: "100%",
+  },
+  heroPlaceholder: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255,0.06)",
+  },
+  heroTopFade: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+  },
+  heroBottomFade: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 120,
+  },
+  content: {
+    padding: theme.space[4],
+    gap: 16,
+    marginTop: -theme.space[6],
+  },
+  footer: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: theme.space[4],
+    backgroundColor: "rgba(11,11,13,0.92)",
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border,
+  },
+});
