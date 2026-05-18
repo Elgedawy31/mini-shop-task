@@ -13,8 +13,11 @@ export type ProductCardSize = "large" | "compact";
 
 const SIZES = {
   large: { image: 204, body: 92 },
-  compact: { image: 118, body: 60 },
+  compact: { image: 118, body: 74 },
 } as const;
+
+/** Inner bottom inset so the View row is not flush with the card edge (compact only). */
+const COMPACT_BODY_PADDING_BOTTOM = theme.space[4];
 
 function cardVariantForIndex(index: number): ProductCardSize {
   const row = Math.floor(index / 2);
@@ -80,7 +83,13 @@ export function ProductCard({
           </View>
         </View>
 
-        <View style={[styles.body, { height: dims.body }]}>
+        <View
+          style={[
+            styles.body,
+            { height: dims.body },
+            size === "compact" && { paddingBottom: COMPACT_BODY_PADDING_BOTTOM },
+          ]}
+        >
           <AppText
             size={size === "large" ? 14 : 13}
             weight="semibold"
@@ -95,7 +104,7 @@ export function ProductCard({
             </AppText>
           ) : null}
 
-          <View style={styles.footer}>
+          <View style={[styles.footer, size === "compact" && styles.footerCompact]}>
             <AppText size={11} color={theme.colors.muted}>
               View
             </AppText>
@@ -118,11 +127,20 @@ export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize
         <View
           style={[styles.imageWrap, { height: dims.image, backgroundColor: theme.colors.surface2 }]}
         />
-        <View style={[styles.body, { height: dims.body, gap: 8 }]}>
+        <View
+          style={[
+            styles.body,
+            { height: dims.body, gap: 8 },
+            size === "compact" && { paddingBottom: COMPACT_BODY_PADDING_BOTTOM },
+          ]}
+        >
           <View style={[styles.shimmerLine, { width: "88%", height: 12 }]} />
           <View style={[styles.shimmerLine, { width: "62%", height: 10 }]} />
           {size === "large" ? (
             <View style={[styles.shimmerLine, { width: "78%", height: 10 }]} />
+          ) : null}
+          {size === "compact" ? (
+            <View style={[styles.shimmerLine, { width: "42%", height: 10 }]} />
           ) : null}
         </View>
       </View>
@@ -192,6 +210,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginTop: "auto",
+  },
+  footerCompact: {
+    marginTop: 6,
   },
   chevron: {
     width: 22,
