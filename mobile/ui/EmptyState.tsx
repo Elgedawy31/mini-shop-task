@@ -1,4 +1,6 @@
 import { Pressable, View } from "react-native";
+
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import { AppText, VStack } from "./Primitives";
 
@@ -13,13 +15,15 @@ export function EmptyState({
   actionLabel?: string;
   onAction?: () => void;
 }) {
+  const { colors } = useAppTheme();
+
   return (
     <View
       style={{
         borderRadius: theme.radii.xl,
         borderWidth: 1,
-        borderColor: theme.colors.border,
-        backgroundColor: theme.colors.surface,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
         padding: theme.space[5],
       }}
     >
@@ -28,7 +32,7 @@ export function EmptyState({
           {title}
         </AppText>
         {description ? (
-          <AppText size={13} color={theme.colors.muted}>
+          <AppText size={13} color={colors.muted}>
             {description}
           </AppText>
         ) : null}
@@ -41,8 +45,8 @@ export function EmptyState({
               paddingHorizontal: 14,
               borderRadius: theme.radii.lg,
               borderWidth: 1,
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface2,
+              borderColor: colors.border,
+              backgroundColor: colors.surface2,
               opacity: pressed ? 0.92 : 1,
               alignSelf: "flex-start",
             })}

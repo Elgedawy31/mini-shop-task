@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { StyleSheet } from "react-native";
 import { router } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
@@ -11,11 +11,38 @@ import Animated, {
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useAppTheme } from "@/theme/ThemeContext";
+import { overlayGlassButton } from "@/theme/surfaces";
 import { theme } from "@/theme/theme";
 import { AnimatedPressable } from "@/ui/form/AnimatedPressable";
 
 export function ProductDetailBackButton() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useAppTheme();
+  const glass = overlayGlassButton(isDark);
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        host: {
+          position: "absolute",
+          left: theme.space[4],
+          zIndex: 20,
+        },
+        button: {
+          width: 44,
+          height: 44,
+          borderRadius: 22,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: glass.backgroundColor,
+          borderWidth: 1,
+          borderColor: glass.borderColor,
+        },
+      }),
+    [glass.backgroundColor, glass.borderColor]
+  );
+
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.88);
   const translateX = useSharedValue(-8);
@@ -42,26 +69,8 @@ export function ProductDetailBackButton() {
         accessibilityRole="button"
         accessibilityLabel="Go back"
       >
-        <FontAwesome name="chevron-left" size={16} color={theme.colors.text} />
+        <FontAwesome name="chevron-left" size={16} color={colors.text} />
       </AnimatedPressable>
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  host: {
-    position: "absolute",
-    left: theme.space[4],
-    zIndex: 20,
-  },
-  button: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(20,20,25,0.72)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-});

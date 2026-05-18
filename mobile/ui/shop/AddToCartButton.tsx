@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import { AppText } from "@/ui/Primitives";
 
@@ -22,9 +23,12 @@ type AddToCartButtonProps = {
 };
 
 export function AddToCartButton({ disabled, loading, onAdd }: AddToCartButtonProps) {
+  const { colors, isDark } = useAppTheme();
   const [added, setAdded] = useState(false);
   const scale = useSharedValue(1);
   const success = useSharedValue(0);
+
+  const successBorder = isDark ? "rgba(34,197,94,0.45)" : "rgba(22,163,74,0.40)";
 
   const handlePress = useCallback(() => {
     if (disabled || loading || added) return;
@@ -44,19 +48,14 @@ export function AddToCartButton({ disabled, loading, onAdd }: AddToCartButtonPro
     }, 1400);
   }, [added, disabled, loading, onAdd, scale, success]);
 
-  const buttonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    backgroundColor: interpolateColor(
-      success.value,
-      [0, 1],
-      [theme.colors.primary, theme.colors.success]
-    ),
-    borderColor: interpolateColor(
-      success.value,
-      [0, 1],
-      [theme.colors.border, "rgba(34,197,94,0.45)"]
-    ),
-  }));
+  const buttonStyle = useAnimatedStyle(
+    () => ({
+      transform: [{ scale: scale.value }],
+      backgroundColor: interpolateColor(success.value, [0, 1], [colors.primary, colors.success]),
+      borderColor: interpolateColor(success.value, [0, 1], [colors.border, successBorder]),
+    }),
+    [colors.primary, colors.success, colors.border, successBorder]
+  );
 
   const checkStyle = useAnimatedStyle(() => ({
     opacity: success.value,

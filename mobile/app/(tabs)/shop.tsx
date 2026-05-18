@@ -164,6 +164,7 @@ function ShopHeader({
 }
 
 export default function Shop() {
+  const { colors } = useAppTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
   const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
@@ -228,7 +229,7 @@ export default function Shop() {
           <RefreshControl
             refreshing={isFetching && !isFetchingNextPage && !isSearchPending}
             onRefresh={() => void refetch()}
-            tintColor={theme.colors.primary2}
+            tintColor={colors.primary2}
           />
         }
       >

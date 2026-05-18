@@ -1,8 +1,11 @@
+import { useMemo } from "react";
 import { Image, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Animated from "react-native-reanimated";
 
+import { useAppTheme } from "@/theme/ThemeContext";
+import { mutedSurfaceFill, productCardImageGradient, skeletonLineFill } from "@/theme/surfaces";
 import { theme } from "@/theme/theme";
 import type { Product } from "@/lib/api/models";
 import { AppText } from "@/ui/Primitives";
@@ -46,8 +49,92 @@ export function ProductCard({
   animateEnter = false,
   enterDelay = 0,
 }: ProductCardProps) {
+  const { colors, isDark } = useAppTheme();
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          width: "100%",
+          alignSelf: "flex-start",
+        },
+        card: {
+          width: "100%",
+          borderRadius: theme.radii.xl,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: "hidden",
+        },
+        imageWrap: {
+          backgroundColor: colors.surface2,
+          overflow: "hidden",
+        },
+        image: {
+          ...StyleSheet.absoluteFillObject,
+          width: "100%",
+          height: "100%",
+        },
+        imagePlaceholder: {
+          flex: 1,
+          backgroundColor: mutedSurfaceFill(isDark),
+        },
+        categoryPill: {
+          position: "absolute",
+          top: 10,
+          left: 10,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 999,
+          backgroundColor: isDark ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.45)",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,255,255,0.14)" : "rgba(255,255,255,0.2)",
+        },
+        pricePill: {
+          position: "absolute",
+          bottom: 10,
+          right: 10,
+          flexDirection: "row",
+          alignItems: "baseline",
+          gap: 3,
+          paddingHorizontal: 10,
+          paddingVertical: 6,
+          borderRadius: theme.radii.md,
+          backgroundColor: colors.primary,
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.4)" : "rgba(187,77,0,0.35)",
+        },
+        body: {
+          paddingHorizontal: theme.space[3],
+          paddingVertical: theme.space[3],
+          gap: 5,
+          justifyContent: "flex-start",
+        },
+        footer: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: "auto",
+        },
+        footerCompact: {
+          marginTop: 6,
+        },
+        chevron: {
+          width: 22,
+          height: 22,
+          borderRadius: 11,
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: isDark ? "rgba(255,122,24,0.12)" : "rgba(234,88,12,0.10)",
+          borderWidth: 1,
+          borderColor: isDark ? "rgba(255,122,24,0.25)" : "rgba(234,88,12,0.22)",
+        },
+      }),
+    [colors, isDark]
+  );
+
   const dims = SIZES[size];
   const fadeStyle = useFadeInUp(enterDelay, animateEnter);
+  const imageGradient = productCardImageGradient(isDark);
 
   return (
     <Animated.View style={[styles.wrap, fadeStyle]}>
@@ -60,7 +147,7 @@ export function ProductCard({
           )}
 
           <LinearGradient
-            colors={["transparent", "rgba(11,11,13,0.75)", "rgba(11,11,13,0.95)"]}
+            colors={imageGradient}
             locations={[0.35, 0.72, 1]}
             style={StyleSheet.absoluteFill}
           />
@@ -99,17 +186,17 @@ export function ProductCard({
           </AppText>
 
           {size === "large" && product.description ? (
-            <AppText size={11} color={theme.colors.muted} numberOfLines={2}>
+            <AppText size={11} color={colors.muted} numberOfLines={2}>
               {product.description}
             </AppText>
           ) : null}
 
           <View style={[styles.footer, size === "compact" && styles.footerCompact]}>
-            <AppText size={11} color={theme.colors.muted}>
+            <AppText size={11} color={colors.muted}>
               View
             </AppText>
             <View style={styles.chevron}>
-              <FontAwesome name="chevron-right" size={9} color={theme.colors.primary2} />
+              <FontAwesome name="chevron-right" size={9} color={colors.primary2} />
             </View>
           </View>
         </View>
@@ -119,18 +206,50 @@ export function ProductCard({
 }
 
 export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize }) {
+  const { colors, isDark } = useAppTheme();
   const dims = SIZES[size];
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        wrap: {
+          width: "100%",
+          alignSelf: "flex-start",
+        },
+        card: {
+          width: "100%",
+          borderRadius: theme.radii.xl,
+          backgroundColor: colors.surface,
+          borderWidth: 1,
+          borderColor: colors.border,
+          overflow: "hidden",
+        },
+        imageWrap: {
+          backgroundColor: colors.surface2,
+          overflow: "hidden",
+        },
+        body: {
+          paddingHorizontal: theme.space[3],
+          paddingVertical: theme.space[3],
+          gap: 8,
+          justifyContent: "flex-start",
+        },
+        shimmerLine: {
+          borderRadius: 6,
+          backgroundColor: skeletonLineFill(isDark),
+        },
+      }),
+    [colors, isDark]
+  );
 
   return (
     <View style={styles.wrap}>
       <View style={styles.card}>
-        <View
-          style={[styles.imageWrap, { height: dims.image, backgroundColor: theme.colors.surface2 }]}
-        />
+        <View style={[styles.imageWrap, { height: dims.image }]} />
         <View
           style={[
             styles.body,
-            { height: dims.body, gap: 8 },
+            { height: dims.body },
             size === "compact" && { paddingBottom: COMPACT_BODY_PADDING_BOTTOM },
           ]}
         >
@@ -147,85 +266,3 @@ export function ProductCardSkeleton({ size = "large" }: { size?: ProductCardSize
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    width: "100%",
-    alignSelf: "flex-start",
-  },
-  card: {
-    width: "100%",
-    borderRadius: theme.radii.xl,
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    overflow: "hidden",
-  },
-  imageWrap: {
-    backgroundColor: theme.colors.surface2,
-    overflow: "hidden",
-  },
-  image: {
-    ...StyleSheet.absoluteFillObject,
-    width: "100%",
-    height: "100%",
-  },
-  imagePlaceholder: {
-    flex: 1,
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  categoryPill: {
-    position: "absolute",
-    top: 10,
-    left: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.14)",
-  },
-  pricePill: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 3,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: theme.radii.md,
-    backgroundColor: "rgba(187,77,0,0.9)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.4)",
-  },
-  body: {
-    paddingHorizontal: theme.space[3],
-    paddingVertical: theme.space[3],
-    gap: 5,
-    justifyContent: "flex-start",
-  },
-  footer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: "auto",
-  },
-  footerCompact: {
-    marginTop: 6,
-  },
-  chevron: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,122,24,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.25)",
-  },
-  shimmerLine: {
-    borderRadius: 6,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-});
