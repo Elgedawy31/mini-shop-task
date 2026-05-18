@@ -4,6 +4,7 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useMemo } from "react";
+import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -99,6 +100,7 @@ function ThemedNavigation() {
 
   return (
     <ThemeProvider value={navTheme}>
+      <StatusBar style={isDark ? "light" : "dark"} />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <CartProvider>

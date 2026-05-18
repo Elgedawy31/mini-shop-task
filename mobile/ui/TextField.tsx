@@ -8,6 +8,8 @@ import {
   type TextInputProps,
   type TextStyle,
 } from "react-native";
+import { useAppTheme } from "@/theme/ThemeContext";
+import { inputFocusBorderColor, inputPlaceholderColor } from "@/theme/input";
 import { theme } from "@/theme/theme";
 import { AppText } from "./Primitives";
 
@@ -49,6 +51,7 @@ export const TextField = forwardRef<TextInputType, TextFieldProps>(function Text
   },
   ref
 ) {
+  const { colors, isDark } = useAppTheme();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const isPassword = Boolean(secureTextEntry);
@@ -56,7 +59,7 @@ export const TextField = forwardRef<TextInputType, TextFieldProps>(function Text
   const inputStyle: TextStyle = {
     flex: 1,
     height: 48,
-    color: theme.colors.text,
+    color: colors.text,
     fontFamily: theme.font.regular,
     fontSize: 15,
     paddingVertical: 0,
@@ -64,7 +67,7 @@ export const TextField = forwardRef<TextInputType, TextFieldProps>(function Text
 
   return (
     <View style={{ gap: 8 }}>
-      <AppText size={12} weight="semibold" color={theme.colors.muted}>
+      <AppText size={12} weight="semibold" color={colors.muted}>
         {label}
       </AppText>
       <View
@@ -74,26 +77,23 @@ export const TextField = forwardRef<TextInputType, TextFieldProps>(function Text
           height: 52,
           borderRadius: theme.radii.lg,
           borderWidth: 1.5,
-          borderColor: focused ? "rgba(255,122,24,0.55)" : theme.colors.border,
-          backgroundColor: theme.colors.surface2,
+          borderColor: focused ? inputFocusBorderColor(isDark) : colors.border,
+          backgroundColor: colors.surface2,
           paddingHorizontal: theme.space[4],
           gap: 10,
           opacity: editable ? 1 : 0.6,
         }}
       >
         {icon ? (
-          <FontAwesome
-            name={icon}
-            size={15}
-            color={focused ? theme.colors.primary2 : theme.colors.muted}
-          />
+          <FontAwesome name={icon} size={15} color={focused ? colors.primary2 : colors.muted} />
         ) : null}
         <TextInput
           ref={ref}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="rgba(244,244,245,0.32)"
+          placeholderTextColor={inputPlaceholderColor(colors, isDark)}
+          keyboardAppearance={isDark ? "dark" : "light"}
           secureTextEntry={isPassword && !revealed}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -115,11 +115,7 @@ export const TextField = forwardRef<TextInputType, TextFieldProps>(function Text
             accessibilityRole="button"
             accessibilityLabel={revealed ? "Hide password" : "Show password"}
           >
-            <FontAwesome
-              name={revealed ? "eye-slash" : "eye"}
-              size={16}
-              color={theme.colors.muted}
-            />
+            <FontAwesome name={revealed ? "eye-slash" : "eye"} size={16} color={colors.muted} />
           </Pressable>
         ) : null}
       </View>

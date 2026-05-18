@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { View } from "react-native";
+import { router } from "expo-router";
 
 import { api } from "@/features/api";
 import { useAuth } from "@/features/auth/AuthContext";
@@ -44,6 +45,12 @@ export function ProfileEditForm({ user, onUpdated }: ProfileEditFormProps) {
   }, [user.email, user.name, reset]);
 
   const onSubmit = handleSubmit(async (values) => {
+    if (!auth.session?.token) {
+      toast("error", "Session expired", "Please sign in again to update your profile.");
+      router.replace("/(auth)/sign-in");
+      return;
+    }
+
     const payload: { name?: string; email?: string; password?: string } = {
       name: values.name.trim(),
       email: values.email.trim(),

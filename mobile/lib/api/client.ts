@@ -83,6 +83,8 @@ class ApiClient {
           url.includes("/auth/forgot-password") ||
           url.includes("/auth/forgotpassword");
 
+        const isProfileMe = url.includes("/auth/me");
+
         if (status === 401 && original && !original._retry && !isAuthEndpoint) {
           const stored = await sessionStore.load();
           if (stored?.refreshToken) {
@@ -97,7 +99,9 @@ class ApiClient {
               return this.client.request(original);
             }
 
-            await sessionStore.clear();
+            if (!isProfileMe) {
+              await sessionStore.clear();
+            }
           }
         }
 

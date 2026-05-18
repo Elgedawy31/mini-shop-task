@@ -8,9 +8,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
 import { darkColors, lightColors, type ThemeColors } from "@/theme/palettes";
-import { setActiveThemeColors, themeTokens } from "@/theme/theme";
+import { setActiveThemeColors } from "@/theme/theme";
 
 const STORAGE_KEY = "mini_shop_theme_mode_v1";
 
@@ -56,7 +55,8 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const toggleMode = useCallback(async () => {
-    await setMode(mode === "dark" ? "light" : "dark");
+    const next: ThemeMode = mode === "dark" ? "light" : "dark";
+    await setMode(next);
   }, [mode, setMode]);
 
   const value = useMemo<ThemeContextValue>(
@@ -72,11 +72,7 @@ export function AppThemeProvider({ children }: { children: ReactNode }) {
 
   if (!ready) return null;
 
-  return (
-    <ThemeContext.Provider value={value}>
-      <>{children}</>
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
 export function useAppTheme() {

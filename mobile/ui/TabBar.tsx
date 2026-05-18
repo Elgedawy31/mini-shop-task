@@ -1,11 +1,12 @@
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { LayoutChangeEvent, Pressable, StyleSheet, Text, View } from "react-native";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useCart } from "@/features/cart/CartContext";
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 
 const TAB_ICONS: Record<string, React.ComponentProps<typeof FontAwesome>["name"]> = {
@@ -32,6 +33,7 @@ function TabItem({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const { colors } = useAppTheme();
   const scale = useSharedValue(isFocused ? 1 : 0);
 
   useEffect(() => {
@@ -52,13 +54,9 @@ function TabItem({
       accessibilityLabel={label}
     >
       <Animated.View style={iconStyle}>
-        <FontAwesome
-          name={icon}
-          size={22}
-          color={isFocused ? theme.colors.primary2 : theme.colors.muted}
-        />
+        <FontAwesome name={icon} size={22} color={isFocused ? colors.primary2 : colors.muted} />
         {badge && badge > 0 ? (
-          <View style={styles.badge}>
+          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
             <Text style={styles.badgeText}>{badge > 9 ? "9+" : badge}</Text>
           </View>
         ) : null}
@@ -67,7 +65,7 @@ function TabItem({
         style={[
           styles.label,
           {
-            color: isFocused ? theme.colors.text : theme.colors.muted,
+            color: isFocused ? colors.text : colors.muted,
             fontFamily: isFocused ? theme.font.semibold : theme.font.medium,
           },
         ]}
@@ -80,6 +78,7 @@ function TabItem({
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
   const cart = useCart();
   const cartCount = cart.items.reduce((sum, item) => sum + item.quantity, 0);
   const [barWidth, setBarWidth] = useState(0);
@@ -104,10 +103,26 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     };
   });
 
+  const containerStyle = useMemo(
+    () => [
+      styles.container,
+      {
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+        paddingBottom: Math.max(insets.bottom, 10),
+      },
+    ],
+    [colors.border, colors.surface, insets.bottom]
+  );
+
   return (
-    <View style={[styles.container, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+    <View style={containerStyle}>
       <View style={styles.bar} onLayout={onBarLayout}>
-        {barWidth > 0 ? <Animated.View style={[styles.indicator, indicatorStyle]} /> : null}
+        {barWidth > 0 ? (
+          <Animated.View
+            style={[styles.indicator, { backgroundColor: colors.primary2 }, indicatorStyle]}
+          />
+        ) : null}
 
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
@@ -156,9 +171,7 @@ export function getTabBarHeight(bottomInset: number) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: theme.colors.surface,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.border,
   },
   bar: {
     flexDirection: "row",
@@ -170,7 +183,6 @@ const styles = StyleSheet.create({
     top: 0,
     height: 3,
     borderRadius: 999,
-    backgroundColor: theme.colors.primary2,
   },
   tab: {
     flex: 1,
@@ -190,7 +202,6 @@ const styles = StyleSheet.create({
     height: 17,
     borderRadius: 999,
     paddingHorizontal: 4,
-    backgroundColor: theme.colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },

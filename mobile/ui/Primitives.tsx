@@ -1,5 +1,7 @@
 import { ActivityIndicator, Pressable, Text, View, type ViewStyle } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 
 export function Screen({
@@ -9,11 +11,12 @@ export function Screen({
 }: {
   children: React.ReactNode;
   padded?: boolean;
-  /** Safe area edges — omit `top` when a stack header already handles the status bar. */
   edges?: Edge[];
 }) {
+  const { colors } = useAppTheme();
+
   return (
-    <View style={{ flex: 1, backgroundColor: theme.colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <SafeAreaView style={{ flex: 1 }} edges={edges}>
         <View style={{ flex: 1, padding: padded ? theme.space[4] : 0 }}>{children}</View>
       </SafeAreaView>
@@ -22,14 +25,16 @@ export function Screen({
 }
 
 export function Card({ children, style }: { children: React.ReactNode; style?: ViewStyle }) {
+  const { colors } = useAppTheme();
+
   return (
     <View
       style={[
         {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: colors.surface,
           borderRadius: theme.radii.xl,
           borderWidth: 1,
-          borderColor: theme.colors.border,
+          borderColor: colors.border,
           padding: theme.space[4],
         },
         style,
@@ -76,7 +81,7 @@ export function VStack({
 
 export function AppText({
   children,
-  color = theme.colors.text,
+  color,
   size = 14,
   weight = "regular",
   style,
@@ -89,6 +94,8 @@ export function AppText({
   style?: any;
   numberOfLines?: number;
 }) {
+  const { colors } = useAppTheme();
+  const resolvedColor = color ?? colors.text;
   const family =
     weight === "bold"
       ? theme.font.bold
@@ -97,9 +104,10 @@ export function AppText({
         : weight === "medium"
           ? theme.font.medium
           : theme.font.regular;
+
   return (
     <Text
-      style={[{ color, fontSize: size, fontFamily: family }, style]}
+      style={[{ color: resolvedColor, fontSize: size, fontFamily: family }, style]}
       numberOfLines={numberOfLines}
     >
       {children}
@@ -114,16 +122,18 @@ export function Badge({
   label: string;
   tone?: "neutral" | "success" | "warning" | "danger" | "info";
 }) {
-  const colors =
+  const { colors, isDark } = useAppTheme();
+
+  const toneColors =
     tone === "success"
-      ? { bg: "rgba(34,197,94,0.14)", fg: "#7CF7A6" }
+      ? { bg: "rgba(34,197,94,0.14)", fg: isDark ? "#7CF7A6" : "#15803D" }
       : tone === "warning"
-        ? { bg: "rgba(245,158,11,0.14)", fg: "#F8D08A" }
+        ? { bg: "rgba(245,158,11,0.14)", fg: isDark ? "#F8D08A" : "#B45309" }
         : tone === "danger"
-          ? { bg: "rgba(239,68,68,0.14)", fg: "#FFB4B4" }
+          ? { bg: "rgba(239,68,68,0.14)", fg: isDark ? "#FFB4B4" : "#B91C1C" }
           : tone === "info"
-            ? { bg: "rgba(96,165,250,0.14)", fg: "#A7D0FF" }
-            : { bg: "rgba(255,255,255,0.06)", fg: theme.colors.muted };
+            ? { bg: "rgba(96,165,250,0.14)", fg: isDark ? "#A7D0FF" : "#1D4ED8" }
+            : { bg: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)", fg: colors.muted };
 
   return (
     <View
@@ -132,12 +142,12 @@ export function Badge({
         borderRadius: 999,
         paddingHorizontal: 10,
         paddingVertical: 6,
-        backgroundColor: colors.bg,
+        backgroundColor: toneColors.bg,
         borderWidth: 1,
-        borderColor: theme.colors.border,
+        borderColor: colors.border,
       }}
     >
-      <AppText size={12} weight="medium" color={colors.fg}>
+      <AppText size={12} weight="medium" color={toneColors.fg}>
         {label}
       </AppText>
     </View>
@@ -159,15 +169,16 @@ export function Button({
   loading?: boolean;
   left?: React.ReactNode;
 }) {
+  const { colors } = useAppTheme();
   const isDisabled = Boolean(disabled || loading);
   const bg =
     variant === "primary"
-      ? theme.colors.primary
+      ? colors.primary
       : variant === "secondary"
-        ? theme.colors.surface2
+        ? colors.surface2
         : "transparent";
-  const borderColor = variant === "ghost" ? "transparent" : theme.colors.border;
-  const textColor = variant === "primary" ? "#FFF7ED" : theme.colors.text;
+  const borderColor = variant === "ghost" ? "transparent" : colors.border;
+  const textColor = variant === "primary" ? "#FFF7ED" : colors.text;
 
   return (
     <Pressable

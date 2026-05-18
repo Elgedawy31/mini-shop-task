@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import Animated from "react-native-reanimated";
 
+import { useAppTheme } from "@/theme/ThemeContext";
+import { inputFocusBorderColor, inputPlaceholderColor } from "@/theme/input";
 import { theme } from "@/theme/theme";
 import { AppText } from "@/ui/Primitives";
 import { useShakeAnimation } from "@/ui/form/useShakeAnimation";
@@ -125,6 +127,7 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
   },
   ref
 ) {
+  const { colors, isDark } = useAppTheme();
   const [focused, setFocused] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const shakeStyle = useShakeAnimation(shake);
@@ -134,21 +137,21 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
   const inputStyle: TextStyle = {
     flex: 1,
     height: 48,
-    color: theme.colors.text,
+    color: colors.text,
     fontFamily: theme.font.regular,
     fontSize: 15,
     paddingVertical: 0,
   };
 
   const borderColor = hasError
-    ? theme.colors.danger
+    ? colors.danger
     : focused
-      ? "rgba(255,122,24,0.55)"
-      : theme.colors.border;
+      ? inputFocusBorderColor(isDark)
+      : colors.border;
 
   return (
     <Animated.View style={[{ gap: 8 }, shakeStyle]}>
-      <AppText size={12} weight="semibold" color={theme.colors.muted}>
+      <AppText size={12} weight="semibold" color={colors.muted}>
         {label}
       </AppText>
       <View
@@ -159,7 +162,7 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
           borderRadius: theme.radii.lg,
           borderWidth: 1.5,
           borderColor,
-          backgroundColor: theme.colors.surface2,
+          backgroundColor: colors.surface2,
           paddingHorizontal: theme.space[4],
           gap: 10,
           opacity: editable ? 1 : 0.6,
@@ -169,9 +172,7 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
           <FontAwesome
             name={icon}
             size={15}
-            color={
-              hasError ? theme.colors.danger : focused ? theme.colors.primary2 : theme.colors.muted
-            }
+            color={hasError ? colors.danger : focused ? colors.primary2 : colors.muted}
           />
         ) : null}
         <TextInput
@@ -184,7 +185,8 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
           }}
           onFocus={() => setFocused(true)}
           placeholder={placeholder}
-          placeholderTextColor="rgba(244,244,245,0.32)"
+          placeholderTextColor={inputPlaceholderColor(colors, isDark)}
+          keyboardAppearance={isDark ? "dark" : "light"}
           secureTextEntry={isPassword && !revealed}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
@@ -204,20 +206,16 @@ const FieldInput = forwardRef<TextInputType, FieldInputProps>(function FieldInpu
             accessibilityRole="button"
             accessibilityLabel={revealed ? "Hide password" : "Show password"}
           >
-            <FontAwesome
-              name={revealed ? "eye-slash" : "eye"}
-              size={16}
-              color={theme.colors.muted}
-            />
+            <FontAwesome name={revealed ? "eye-slash" : "eye"} size={16} color={colors.muted} />
           </Pressable>
         ) : null}
       </View>
       {error ? (
-        <AppText size={11} color={theme.colors.danger}>
+        <AppText size={11} color={colors.danger}>
           {error}
         </AppText>
       ) : hint ? (
-        <AppText size={11} color={theme.colors.muted}>
+        <AppText size={11} color={colors.muted}>
           {hint}
         </AppText>
       ) : null}

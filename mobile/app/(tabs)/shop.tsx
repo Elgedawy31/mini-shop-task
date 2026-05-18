@@ -12,6 +12,8 @@ import { router } from "expo-router";
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
 import { useCategories, useInfiniteProducts } from "@/features/hooks";
+import { useAppTheme } from "@/theme/ThemeContext";
+import { inputPlaceholderColor } from "@/theme/input";
 import { theme } from "@/theme/theme";
 import type { Product } from "@/lib/api/models";
 import { AppText, HStack, Screen } from "@/ui/Primitives";
@@ -67,6 +69,7 @@ function ShopHeader({
   loadingCats: boolean;
   isSearching?: boolean;
 }) {
+  const { colors, isDark } = useAppTheme();
   const headerOpacity = useSharedValue(0);
   const headerY = useSharedValue(12);
 
@@ -96,7 +99,7 @@ function ShopHeader({
         <AppText size={22} weight="bold">
           Shop
         </AppText>
-        <AppText size={12} color={theme.colors.muted}>
+        <AppText size={12} color={colors.muted}>
           Browse products in a curated grid.
         </AppText>
       </View>
@@ -106,7 +109,8 @@ function ShopHeader({
           value={search}
           onChangeText={onSearchChange}
           placeholder="Search products"
-          placeholderTextColor="rgba(244,244,245,0.35)"
+          placeholderTextColor={inputPlaceholderColor(colors, isDark)}
+          keyboardAppearance={isDark ? "dark" : "light"}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
@@ -114,11 +118,11 @@ function ShopHeader({
             height: 48,
             borderRadius: theme.radii.lg,
             borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface2,
+            borderColor: colors.border,
+            backgroundColor: colors.surface2,
             paddingHorizontal: theme.space[4],
             paddingRight: isSearching ? 44 : theme.space[4],
-            color: theme.colors.text,
+            color: colors.text,
             fontFamily: theme.font.regular,
             fontSize: 14,
           }}
@@ -126,7 +130,7 @@ function ShopHeader({
         {isSearching ? (
           <ActivityIndicator
             size="small"
-            color={theme.colors.primary2}
+            color={colors.primary2}
             style={{ position: "absolute", right: 14, top: 14 }}
           />
         ) : null}

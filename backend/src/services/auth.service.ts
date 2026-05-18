@@ -341,6 +341,17 @@ export async function getMe(accessToken: string): Promise<AuthUser> {
 export async function updateMe(accessToken: string, input: UpdateProfileInput): Promise<AuthUser> {
   const supabase = createUserClient(accessToken);
 
+  const { data: authData, error: authUserError } = await supabase.auth.getUser(accessToken);
+  if (authUserError || !authData.user) {
+    throw new AppError({
+      code: "unauthorized",
+      message: authUserError?.message ?? "Not authenticated",
+      statusCode: 401,
+    });
+  }
+
+  const userId = authData.user.id;
+
   if (input.email || input.password) {
     const { error: authError } = await supabase.auth.updateUser({
       email: input.email,
@@ -357,15 +368,7 @@ export async function updateMe(accessToken: string, input: UpdateProfileInput): 
   }
 
   if (input.name) {
-    const { data: authData } = await supabase.auth.getUser();
-    if (!authData.user) {
-      throw new AppError({ code: "unauthorized", message: "Not authenticated", statusCode: 401 });
-    }
-
-    const { error } = await supabase
-      .from("profiles")
-      .update({ name: input.name })
-      .eq("id", authData.user.id);
+    const { error } = await supabase.from("profiles").update({ name: input.name }).eq("id", userId);
 
     if (error) {
       throw new AppError({

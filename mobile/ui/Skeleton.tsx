@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
-import { Animated, View, type ViewStyle } from "react-native";
+import { Animated, type ViewStyle } from "react-native";
+
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 
 export function Skeleton({ height, style }: { height: number; style?: ViewStyle }) {
+  const { colors, isDark } = useAppTheme();
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -24,10 +27,10 @@ export function Skeleton({ height, style }: { height: number; style?: ViewStyle 
         {
           height,
           borderRadius: theme.radii.lg,
-          backgroundColor: "rgba(255,255,255,0.08)",
+          backgroundColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
           opacity,
           borderWidth: 1,
-          borderColor: theme.colors.border,
+          borderColor: colors.border,
         },
         style,
       ]}

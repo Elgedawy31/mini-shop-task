@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { ScrollView, View } from "react-native";
 import { router } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -7,6 +7,8 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { api } from "@/features/api";
 import { useAuth } from "@/features/auth/AuthContext";
 import type { AuthUser } from "@/lib/api/types";
+import { useAppTheme } from "@/theme/ThemeContext";
+import { useThemedStyles } from "@/theme/useThemedStyles";
 import { theme } from "@/theme/theme";
 import { AppText, Button, Card, Screen, VStack } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
@@ -16,6 +18,44 @@ import { ProfileGuestCard } from "@/ui/profile/ProfileGuestCard";
 import { ThemeModeToggle } from "@/ui/profile/ThemeModeToggle";
 
 function ProfileHero({ user }: { user: AuthUser }) {
+  const { colors } = useAppTheme();
+  const styles = useThemedStyles(
+    useCallback(
+      (c) => ({
+        hero: {
+          flexDirection: "row" as const,
+          alignItems: "center" as const,
+          gap: theme.space[4],
+          padding: theme.space[4],
+        },
+        avatar: {
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          alignItems: "center" as const,
+          justifyContent: "center" as const,
+          backgroundColor: c.primary,
+          borderWidth: 1,
+          borderColor: "rgba(255,122,24,0.4)",
+        },
+        rolePill: {
+          flexDirection: "row" as const,
+          alignItems: "center" as const,
+          gap: 6,
+          alignSelf: "flex-start" as const,
+          marginTop: 4,
+          paddingHorizontal: 10,
+          paddingVertical: 5,
+          borderRadius: 999,
+          backgroundColor: "rgba(255,122,24,0.12)",
+          borderWidth: 1,
+          borderColor: "rgba(255,122,24,0.25)",
+        },
+      }),
+      []
+    )
+  );
+
   const initial = user.name.trim().charAt(0).toUpperCase() || "?";
 
   return (
@@ -30,12 +70,12 @@ function ProfileHero({ user }: { user: AuthUser }) {
           <AppText size={18} weight="bold">
             {user.name}
           </AppText>
-          <AppText size={13} color={theme.colors.muted}>
+          <AppText size={13} color={colors.muted}>
             {user.email}
           </AppText>
           <View style={styles.rolePill}>
-            <FontAwesome name="shield" size={10} color={theme.colors.primary2} />
-            <AppText size={11} weight="medium" color={theme.colors.primary2}>
+            <FontAwesome name="shield" size={10} color={colors.primary2} />
+            <AppText size={11} weight="medium" color={colors.primary2}>
               {user.role}
             </AppText>
           </View>
@@ -47,8 +87,26 @@ function ProfileHero({ user }: { user: AuthUser }) {
 
 export default function Profile() {
   const auth = useAuth();
+  const { colors } = useAppTheme();
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<AuthUser | undefined>(auth.session?.user);
+
+  const styles = useThemedStyles(
+    useCallback(
+      (c) => ({
+        scroll: {
+          padding: theme.space[4],
+          paddingBottom: theme.space[8],
+          gap: 14,
+        },
+        header: {
+          gap: 4,
+          marginBottom: 4,
+        },
+      }),
+      []
+    )
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -69,7 +127,7 @@ export default function Profile() {
     return () => {
       cancelled = true;
     };
-  }, [auth.session?.token, auth.updateUser]);
+  }, [auth.session?.token]);
 
   return (
     <Screen padded={false}>
@@ -82,7 +140,7 @@ export default function Profile() {
           <AppText size={22} weight="bold">
             Profile
           </AppText>
-          <AppText size={12} color={theme.colors.muted}>
+          <AppText size={12} color={colors.muted}>
             Manage your account and app preferences.
           </AppText>
         </View>
@@ -122,44 +180,3 @@ export default function Profile() {
     </Screen>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    padding: theme.space[4],
-    paddingBottom: theme.space[8],
-    gap: 14,
-  },
-  header: {
-    gap: 4,
-    marginBottom: 4,
-  },
-  hero: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: theme.space[4],
-    padding: theme.space[4],
-  },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: theme.colors.primary,
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.4)",
-  },
-  rolePill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    marginTop: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,122,24,0.12)",
-    borderWidth: 1,
-    borderColor: "rgba(255,122,24,0.25)",
-  },
-});

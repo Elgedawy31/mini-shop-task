@@ -2,6 +2,7 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
+import { useAppTheme } from "@/theme/ThemeContext";
 import { theme } from "@/theme/theme";
 import { formatCurrency } from "@/lib/format";
 import { AppText, HStack } from "@/ui/Primitives";
@@ -16,6 +17,7 @@ type CartSummaryBarProps = {
 
 export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: CartSummaryBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   return (
     <View
@@ -23,13 +25,15 @@ export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: Car
         styles.wrap,
         {
           paddingBottom: theme.space[4] + insets.bottom,
+          backgroundColor: colors.bg,
+          borderTopColor: colors.border,
         },
       ]}
     >
       <View style={styles.card}>
         <HStack justify="space-between">
           <View style={{ gap: 2 }}>
-            <AppText size={12} color={theme.colors.muted}>
+            <AppText size={12} color={colors.muted}>
               Subtotal · {itemCount} item{itemCount === 1 ? "" : "s"}
             </AppText>
             <AppText size={20} weight="bold" color="#FFF7ED">
@@ -37,8 +41,8 @@ export function CartSummaryBar({ itemCount, subtotal, loading, onCheckout }: Car
             </AppText>
           </View>
           <View style={styles.badge}>
-            <FontAwesome name="lock" size={12} color={theme.colors.primary2} />
-            <AppText size={11} weight="medium" color={theme.colors.primary2}>
+            <FontAwesome name="lock" size={12} color={colors.primary2} />
+            <AppText size={11} weight="medium" color={colors.primary2}>
               Secure
             </AppText>
           </View>
@@ -73,9 +77,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: theme.space[4],
     paddingTop: theme.space[3],
-    backgroundColor: "rgba(11,11,13,0.94)",
     borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
   },
   card: {
     gap: theme.space[4],
