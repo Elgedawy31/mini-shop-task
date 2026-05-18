@@ -1,12 +1,12 @@
 import { router } from "expo-router";
-import { useState } from "react";
-import { Pressable, View } from "react-native";
+import { useRef, useState } from "react";
+import { TextInput, View } from "react-native";
 
 import { api } from "@/features/api";
 import { useAuth } from "@/features/auth/AuthContext";
 import { sessionStore } from "@/features/auth/session";
-import { theme } from "@/theme/theme";
-import { AppText, Button, Card, Screen, VStack } from "@/ui/Primitives";
+import { AuthLink, AuthScreen } from "@/ui/AuthScreen";
+import { Button, VStack } from "@/ui/Primitives";
 import { TextField } from "@/ui/TextField";
 import { toast } from "@/ui/Toast";
 
@@ -16,6 +16,9 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setSubmitting] = useState(false);
+
+  const emailRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInput>(null);
 
   const canSubmit = name.trim().length >= 2 && email.trim().length > 3 && password.length >= 6;
 
@@ -40,64 +43,66 @@ export default function Register() {
   };
 
   return (
-    <Screen>
-      <View style={{ flex: 1, justifyContent: "center" }}>
-        <VStack gap={14}>
-          <View style={{ gap: 6 }}>
-            <AppText size={24} weight="bold">
-              Create account
-            </AppText>
-            <AppText size={13} color={theme.colors.muted}>
-              A clean storefront experience with fast checkout.
-            </AppText>
-          </View>
-
-          <Card>
-            <VStack gap={14}>
-              <TextField
-                label="Name"
-                value={name}
-                onChangeText={setName}
-                placeholder="Your name"
-                autoCapitalize="words"
-              />
-              <TextField
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                keyboardType="email-address"
-              />
-              <TextField
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Create a password"
-                secureTextEntry
-              />
-              <Button
-                label={isSubmitting ? "Creating…" : "Create account"}
-                onPress={onSubmit}
-                loading={isSubmitting}
-                disabled={!canSubmit}
-              />
-
-              <Pressable onPress={() => router.back()}>
-                {({ pressed }) => (
-                  <AppText
-                    size={12}
-                    weight="medium"
-                    color={theme.colors.primary2}
-                    style={{ opacity: pressed ? 0.7 : 1, textAlign: "center" }}
-                  >
-                    Back to sign in
-                  </AppText>
-                )}
-              </Pressable>
-            </VStack>
-          </Card>
-        </VStack>
-      </View>
-    </Screen>
+    <AuthScreen
+      showBack
+      badge="New account"
+      title="Create account"
+      subtitle="Join Mini Shop for a polished shopping experience with fast checkout and order tracking."
+      footer={
+        <AuthLink label="Already have an account? Sign in" onPress={() => router.back()} accent />
+      }
+    >
+      <VStack gap={16}>
+        <TextField
+          label="Full name"
+          icon="user-o"
+          value={name}
+          onChangeText={setName}
+          placeholder="Alex Johnson"
+          autoCapitalize="words"
+          autoComplete="name"
+          textContentType="name"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => emailRef.current?.focus()}
+        />
+        <TextField
+          ref={emailRef}
+          label="Email"
+          icon="envelope-o"
+          value={email}
+          onChangeText={setEmail}
+          placeholder="you@example.com"
+          keyboardType="email-address"
+          autoComplete="email"
+          textContentType="emailAddress"
+          returnKeyType="next"
+          blurOnSubmit={false}
+          onSubmitEditing={() => passwordRef.current?.focus()}
+        />
+        <TextField
+          ref={passwordRef}
+          label="Password"
+          icon="lock"
+          value={password}
+          onChangeText={setPassword}
+          placeholder="At least 6 characters"
+          secureTextEntry
+          autoComplete="new-password"
+          textContentType="newPassword"
+          returnKeyType="done"
+          onSubmitEditing={onSubmit}
+          hint="Use 6+ characters with a mix of letters and numbers for better security."
+        />
+        <View style={{ marginTop: 4 }}>
+          <Button
+            label={isSubmitting ? "Creating account…" : "Create account"}
+            onPress={onSubmit}
+            loading={isSubmitting}
+            disabled={!canSubmit}
+          />
+        </View>
+      </VStack>
+    </AuthScreen>
   );
 }
