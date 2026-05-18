@@ -1,6 +1,8 @@
 // API Configuration — aligned with Mini Shop backend contract
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5001",
+  SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || "",
+  SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY || "",
   TIMEOUT: 30_000,
 
   AUTH_TOKEN_KEY: "token",
@@ -22,17 +24,26 @@ export const API_CONFIG = {
       GET: (id: string) => `/products/${id}`,
       UPDATE: (id: string) => `/products/${id}`,
       DELETE: (id: string) => `/products/${id}`,
+      UPLOAD_IMAGE: "/products/upload-image",
     },
 
     ORDERS: {
       CREATE: "/orders",
       MY: "/orders/my",
       LIST: "/orders",
+      GET: (id: string) => `/orders/${id}`,
       UPDATE_STATUS: (id: string) => `/orders/${id}/status`,
+    },
+
+    CATEGORIES: {
+      LIST: "/categories",
     },
 
     DASHBOARD: {
       STATS: "/dashboard/stats",
+      OVERVIEW: "/dashboard/overview",
+      REVENUE_SERIES: "/dashboard/revenue-series",
+      ORDERS_SERIES: "/dashboard/orders-series",
     },
 
     /** Legacy file routes — wire when storage is implemented */

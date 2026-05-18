@@ -10,8 +10,25 @@ import { assertStatusTransition } from "../utils/order-status.js";
 import { parsePagination } from "../utils/pagination.js";
 
 type CustomerSummary = { id: string; name: string };
+type ProductSnapshot = { id: string; name: string; image_url: string | null };
+type EnrichedOrderItemRow = OrderItemRow & {
+  product_name: string;
+  product_image_url: string | null;
+};
 
-function mapOrder(row: OrderRow, items?: OrderItemRow[], customer?: CustomerSummary | null) {
+function normalizeProductSnapshot(value: unknown): ProductSnapshot | null {
+  if (!value) return null;
+  if (Array.isArray(value)) {
+    return (value[0] as ProductSnapshot | undefined) ?? null;
+  }
+  return value as ProductSnapshot;
+}
+
+function mapOrder(
+  row: OrderRow,
+  items?: EnrichedOrderItemRow[],
+  customer?: CustomerSummary | null
+) {
   return {
     id: row.id,
     userId: row.user_id,
@@ -23,6 +40,8 @@ function mapOrder(row: OrderRow, items?: OrderItemRow[], customer?: CustomerSumm
     items: items?.map((item) => ({
       id: item.id,
       productId: item.product_id,
+      productName: item.product_name,
+      productImageUrl: item.product_image_url,
       quantity: item.quantity,
       unitPrice: Number(item.unit_price),
     })),
@@ -54,7 +73,12 @@ async function loadCustomerProfiles(
 }
 
 async function loadOrderItems(client: ReturnType<typeof createUserClient>, orderId: string) {
-  const { data, error } = await client.from("order_items").select("*").eq("order_id", orderId);
+  const { data, error } = await client
+    .from("order_items")
+    .select(
+      "id, order_id, product_id, quantity, unit_price, created_at, products(id, name, image_url)"
+    )
+    .eq("order_id", orderId);
 
   if (error) {
     throw new AppError({
@@ -64,7 +88,20 @@ async function loadOrderItems(client: ReturnType<typeof createUserClient>, order
     });
   }
 
-  return (data ?? []) as OrderItemRow[];
+  return (data ?? []).map((item) => {
+    const product = normalizeProductSnapshot(item.products);
+
+    return {
+      id: item.id,
+      order_id: item.order_id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      unit_price: item.unit_price,
+      created_at: item.created_at,
+      product_name: product?.name ?? "Archived product",
+      product_image_url: product?.image_url ?? null,
+    };
+  }) as EnrichedOrderItemRow[];
 }
 
 export async function createOrder(accessToken: string, input: CreateOrderInput) {

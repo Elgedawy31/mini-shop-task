@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "bunx tsc -p tsconfig.json",
     "start": "bun dist/server.js",
     "seed": "bun scripts/seed.ts",
     "db:link": "supabase link --project-ref sejiiywghkekfvcdqkec",
@@ -13,7 +13,7 @@
     "db:migration": "supabase migration new",
     "db:status": "supabase migration list",
     "lint": "eslint .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "bunx tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@fastify/cors": "^11.0.1",

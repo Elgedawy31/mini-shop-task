@@ -70,7 +70,7 @@ export function Header({ onMenuClick, className, withSidebar = false }: HeaderPr
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/settings")}
           className={cn("hidden sm:flex", iconButtonClass)}
           aria-label="User profile"
         >

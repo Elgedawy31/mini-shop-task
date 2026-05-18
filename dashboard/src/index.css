@@ -210,3 +210,8 @@ samp {
 .text-danger {
   @apply text-destructive;
 }
+
+::selection {
+  background-color: var(--primary);
+  color: var(--foreground);
+}
