@@ -1,20 +1,149 @@
-import { useMemo, useState } from "react";
-import { FlatList, Pressable, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  FlatList,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  RefreshControl,
+  TextInput,
+  View,
+} from "react-native";
 import { router } from "expo-router";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-import { useCategories, useProducts } from "@/features/hooks";
+import { useCategories, useInfiniteProducts } from "@/features/hooks";
 import { theme } from "@/theme/theme";
-import { AppText, HStack, Screen, VStack } from "@/ui/Primitives";
+import type { Product } from "@/lib/api/models";
+import { AppText, HStack, Screen } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
 import { EmptyState } from "@/ui/EmptyState";
-import { ProductCard } from "@/ui/ProductCard";
+import { ProductCardSkeleton } from "@/ui/ProductCard";
+import { MasonryProductGrid } from "@/ui/shop/MasonryProductGrid";
+import { ShopCategoryChip } from "@/ui/shop/ShopCategoryChip";
 
 const PAGE_SIZE = 12;
+const SKELETON_ROWS = 4;
+
+function MasonrySkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
+  return (
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "flex-start",
+        gap: 12,
+        paddingHorizontal: theme.space[4],
+      }}
+    >
+      <View style={{ flex: 1, gap: 12 }}>
+        {Array.from({ length: rows }, (_, row) => (
+          <ProductCardSkeleton key={`left-${row}`} size={row % 2 === 0 ? "large" : "compact"} />
+        ))}
+      </View>
+      <View style={{ flex: 1, gap: 12 }}>
+        {Array.from({ length: rows }, (_, row) => (
+          <ProductCardSkeleton key={`right-${row}`} size={row % 2 === 0 ? "compact" : "large"} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function ShopHeader({
+  search,
+  onSearchChange,
+  category,
+  onCategoryChange,
+  categoryFilters,
+  loadingCats,
+}: {
+  search: string;
+  onSearchChange: (value: string) => void;
+  category: string;
+  onCategoryChange: (slug: string) => void;
+  categoryFilters: Array<{ slug: string; name: string }>;
+  loadingCats: boolean;
+}) {
+  const headerOpacity = useSharedValue(0);
+  const headerY = useSharedValue(12);
+
+  useEffect(() => {
+    headerOpacity.value = withTiming(1, { duration: 350 });
+    headerY.value = withTiming(0, { duration: 350 });
+  }, [headerOpacity, headerY]);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: headerOpacity.value,
+    transform: [{ translateY: headerY.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          paddingHorizontal: theme.space[4],
+          paddingTop: theme.space[4],
+          paddingBottom: theme.space[3],
+          gap: 12,
+        },
+        headerStyle,
+      ]}
+    >
+      <View style={{ gap: 4 }}>
+        <AppText size={22} weight="bold">
+          Shop
+        </AppText>
+        <AppText size={12} color={theme.colors.muted}>
+          Browse products in a curated grid.
+        </AppText>
+      </View>
+
+      <TextInput
+        value={search}
+        onChangeText={onSearchChange}
+        placeholder="Search products"
+        placeholderTextColor="rgba(244,244,245,0.35)"
+        style={{
+          height: 48,
+          borderRadius: theme.radii.lg,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.surface2,
+          paddingHorizontal: theme.space[4],
+          color: theme.colors.text,
+          fontFamily: theme.font.regular,
+          fontSize: 14,
+        }}
+      />
+
+      <FlatList
+        data={categoryFilters}
+        keyExtractor={(item) => item.slug}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ gap: 10, paddingVertical: 6 }}
+        renderItem={({ item }) => (
+          <ShopCategoryChip
+            label={item.name}
+            active={category === item.slug}
+            onPress={() => onCategoryChange(item.slug)}
+          />
+        )}
+        ListEmptyComponent={
+          loadingCats ? (
+            <HStack gap={10}>
+              <Skeleton height={34} style={{ width: 90, borderRadius: 999 }} />
+              <Skeleton height={34} style={{ width: 120, borderRadius: 999 }} />
+              <Skeleton height={34} style={{ width: 80, borderRadius: 999 }} />
+            </HStack>
+          ) : null
+        }
+      />
+    </Animated.View>
+  );
+}
 
 export default function Shop() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
-  const [page, setPage] = useState(1);
 
   const { data: categories = [], isLoading: loadingCats } = useCategories();
 
@@ -22,116 +151,63 @@ export default function Shop() {
     () => [{ slug: "all", name: "All" }, ...categories],
     [categories]
   );
-  const params = useMemo(
+
+  const listParams = useMemo(
     () => ({
-      page,
       limit: PAGE_SIZE,
       search: search.trim() ? search.trim() : undefined,
       category: category === "all" ? undefined : category,
     }),
-    [category, page, search]
+    [category, search]
   );
 
-  const { data, isLoading, isFetching, refetch } = useProducts(params);
+  const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteProducts(listParams);
 
-  const totalPages = data
-    ? Math.max(1, Math.ceil(data.pagination.total / data.pagination.limit))
-    : 1;
+  const products = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
 
-  return (
-    <Screen padded={false}>
-      <View
-        style={{
-          paddingHorizontal: theme.space[4],
-          paddingTop: theme.space[4],
-          paddingBottom: theme.space[3],
-          gap: 12,
-        }}
-      >
-        <View style={{ gap: 4 }}>
-          <AppText size={22} weight="bold">
-            Shop
-          </AppText>
-          <AppText size={12} color={theme.colors.muted}>
-            Search and filter products, then add to cart.
-          </AppText>
-        </View>
+  const gridKey = useMemo(() => `${category}-${search.trim()}`, [category, search]);
 
-        <TextInput
-          value={search}
-          onChangeText={(t) => {
-            setSearch(t);
-            setPage(1);
-          }}
-          placeholder="Search products"
-          placeholderTextColor="rgba(244,244,245,0.35)"
-          style={{
-            height: 48,
-            borderRadius: theme.radii.lg,
-            borderWidth: 1,
-            borderColor: theme.colors.border,
-            backgroundColor: theme.colors.surface2,
-            paddingHorizontal: theme.space[4],
-            color: theme.colors.text,
-            fontFamily: theme.font.regular,
-            fontSize: 14,
-          }}
-        />
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+      const distanceFromBottom = contentSize.height - layoutMeasurement.height - contentOffset.y;
 
-        <FlatList
-          data={categoryFilters}
-          keyExtractor={(item) => item.slug}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 10, paddingVertical: 6 }}
-          renderItem={({ item }) => {
-            const active = category === item.slug;
-            return (
-              <Pressable
-                onPress={() => {
-                  setCategory(item.slug);
-                  setPage(1);
-                }}
-                style={({ pressed }) => ({
-                  paddingHorizontal: 14,
-                  paddingVertical: 10,
-                  borderRadius: 999,
-                  backgroundColor: active ? "rgba(187,77,0,0.22)" : theme.colors.surface2,
-                  borderWidth: 1,
-                  borderColor: active ? "rgba(255,122,24,0.45)" : theme.colors.border,
-                  opacity: pressed ? 0.92 : 1,
-                })}
-              >
-                <AppText size={12} weight="medium" color={active ? "#FFF7ED" : theme.colors.muted}>
-                  {item.name}
-                </AppText>
-              </Pressable>
-            );
-          }}
-          ListEmptyComponent={
-            loadingCats ? (
-              <HStack gap={10}>
-                <Skeleton height={34} style={{ width: 90, borderRadius: 999 }} />
-                <Skeleton height={34} style={{ width: 120, borderRadius: 999 }} />
-                <Skeleton height={34} style={{ width: 80, borderRadius: 999 }} />
-              </HStack>
-            ) : null
-          }
-        />
-      </View>
+      if (distanceFromBottom < 280 && hasNextPage && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
 
-      {isLoading ? (
-        <View style={{ paddingHorizontal: theme.space[4], gap: 12 }}>
-          <HStack gap={12}>
-            <Skeleton height={230} style={{ flex: 1 }} />
-            <Skeleton height={230} style={{ flex: 1 }} />
-          </HStack>
-          <HStack gap={12}>
-            <Skeleton height={230} style={{ flex: 1 }} />
-            <Skeleton height={230} style={{ flex: 1 }} />
-          </HStack>
-        </View>
-      ) : data && data.items.length === 0 ? (
+  const handleProductPress = useCallback((product: Product) => {
+    router.push(`/product/${product.id}`);
+  }, []);
+
+  const header = (
+    <ShopHeader
+      search={search}
+      onSearchChange={setSearch}
+      category={category}
+      onCategoryChange={setCategory}
+      categoryFilters={categoryFilters}
+      loadingCats={loadingCats}
+    />
+  );
+
+  if (isLoading) {
+    return (
+      <Screen padded={false}>
+        {header}
+        <MasonrySkeleton />
+      </Screen>
+    );
+  }
+
+  if (products.length === 0) {
+    return (
+      <Screen padded={false}>
+        {header}
         <View style={{ padding: theme.space[4] }}>
           <EmptyState
             title="No products found"
@@ -140,40 +216,40 @@ export default function Shop() {
             onAction={() => {
               setSearch("");
               setCategory("all");
-              setPage(1);
               void refetch();
             }}
           />
         </View>
-      ) : (
-        <FlatList
-          data={data?.items ?? []}
-          keyExtractor={(item) => item.id}
-          numColumns={2}
-          columnWrapperStyle={{ gap: 12, paddingHorizontal: theme.space[4] }}
-          contentContainerStyle={{ gap: 12, paddingBottom: theme.space[8] }}
-          showsVerticalScrollIndicator={false}
-          onEndReached={() => {
-            if (isFetching) return;
-            if (page < totalPages) setPage((p) => p + 1);
-          }}
-          onEndReachedThreshold={0.35}
-          refreshing={isFetching}
-          onRefresh={() => void refetch()}
-          renderItem={({ item }) => (
-            <ProductCard product={item} onPress={() => router.push(`/product/${item.id}`)} />
-          )}
-          ListFooterComponent={
-            page < totalPages ? (
-              <View style={{ paddingHorizontal: theme.space[4], paddingTop: 10 }}>
-                <Skeleton height={56} style={{ borderRadius: theme.radii.xl }} />
-              </View>
-            ) : (
-              <View style={{ height: 24 }} />
-            )
-          }
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen padded={false}>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={handleScroll}
+        contentContainerStyle={{ paddingBottom: theme.space[8], gap: 12 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={isFetching && !isFetchingNextPage}
+            onRefresh={() => void refetch()}
+            tintColor={theme.colors.primary2}
+          />
+        }
+      >
+        {header}
+
+        <MasonryProductGrid
+          key={gridKey}
+          products={products}
+          onPressProduct={handleProductPress}
+          animate
         />
-      )}
+
+        {isFetchingNextPage ? <MasonrySkeleton rows={1} /> : <View style={{ height: 16 }} />}
+      </Animated.ScrollView>
     </Screen>
   );
 }

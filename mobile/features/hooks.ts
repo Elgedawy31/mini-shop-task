@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 import type { Order } from "@/lib/api/models";
 import { toast } from "@/ui/Toast";
@@ -37,6 +37,23 @@ export function useProducts(params: {
       return res.data;
     },
     keepPreviousData: true,
+  });
+}
+
+export function useInfiniteProducts(params: { limit: number; search?: string; category?: string }) {
+  return useInfiniteQuery({
+    queryKey: queryKeys.products({ ...params, infinite: true }),
+    queryFn: async ({ pageParam }) => {
+      const res = await api.products.list({ ...params, page: pageParam });
+      if (!res.success) throw new Error(res.message);
+      return res.data;
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const { page, limit, total } = lastPage.pagination;
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      return page < totalPages ? page + 1 : undefined;
+    },
   });
 }
 
