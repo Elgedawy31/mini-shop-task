@@ -1,0 +1,182 @@
+/* Import Poppins font from Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+@import "tailwindcss";
+
+/* Make dark utilities work with .dark class */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind CSS v4 Theme Configuration */
+@theme {
+  /* Font Family Configuration */
+  --font-sans:
+    "Poppins", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+
+  /* Primary Brand Color - #CE5A08 */
+  --color-primary: #ce5a08;
+  --color-primary-foreground: #ffffff;
+
+  /* Color palette for primary */
+  --color-primary-50: #fef7ed;
+  --color-primary-100: #fdedd5;
+  --color-primary-200: #fad7aa;
+  --color-primary-300: #f6b874;
+  --color-primary-400: #f1903c;
+  --color-primary-500: #ed7316;
+  --color-primary-600: #ce5a08;
+  --color-primary-700: #b54507;
+  --color-primary-800: #92380a;
+  --color-primary-900: #78300c;
+  --color-primary-950: #41160b;
+
+  /* Background and foreground */
+  --color-background: #f9f9f9;
+  --color-surface: #ffffff;
+  --color-foreground: #171717;
+
+  /* Card colors */
+  --color-card: #ffffff;
+  --color-card-foreground: #171717;
+
+  /* Popover colors */
+  --color-popover: #ffffff;
+  --color-popover-foreground: #171717;
+
+  /* Secondary colors */
+  --color-secondary: #f5f5f5;
+  --color-secondary-foreground: #171717;
+
+  /* Muted colors */
+  --color-muted: #fafafa;
+  --color-muted-foreground: #737373;
+
+  /* Accent colors */
+  --color-accent: #f5f5f5;
+  --color-accent-foreground: #171717;
+
+  /* Semantic colors */
+  --color-destructive: #ef4444;
+  --color-destructive-foreground: #ffffff;
+
+  --color-success: #22c55e;
+  --color-success-foreground: #ffffff;
+
+  --color-warning: #f59e0b;
+  --color-warning-foreground: #ffffff;
+
+  --color-info: #3b82f6;
+  --color-info-foreground: #ffffff;
+
+  /* Border and input */
+  --color-border: #e5e5e5;
+  --color-input: #e5e5e5;
+  --color-ring: #ce5a08;
+
+  /* Border radius */
+  --radius: 0.5rem;
+}
+
+/* Dark mode overrides */
+.dark {
+  --color-background: #000814;
+  --color-surface: #1a1a1a;
+  --color-foreground: #fafafa;
+  --color-card: #171717;
+  --color-card-foreground: #fafafa;
+  --color-popover: #0a0a0a;
+  --color-popover-foreground: #fafafa;
+  --color-primary: #ed7316;
+  --color-primary-foreground: #ffffff;
+  --color-secondary: #262626;
+  --color-secondary-foreground: #fafafa;
+  --color-muted: #262626;
+  --color-muted-foreground: #a3a3a3;
+  --color-accent: #262626;
+  --color-accent-foreground: #fafafa;
+  --color-destructive: #dc2626;
+  --color-destructive-foreground: #fafafa;
+  --color-success: #16a34a;
+  --color-success-foreground: #fafafa;
+  --color-warning: #d97706;
+  --color-warning-foreground: #0a0a0a;
+  --color-info: #2563eb;
+  --color-info-foreground: #fafafa;
+  --color-border: #262626;
+  --color-input: #262626;
+  --color-ring: #ed7316;
+}
+
+/* Global font application */
+* {
+  font-family: var(--font-sans);
+}
+
+/* Professional typography settings */
+body {
+  font-family: var(--font-sans);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Heading typography with Poppins */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-sans);
+}
+
+/* Button and interactive elements */
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-sans);
+}
+
+/* Code elements use monospace */
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-muted-foreground) 30%, transparent);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-muted-foreground) 50%, transparent);
+}
+
+/* Professional text utilities */
+.text-balance {
+  text-wrap: balance;
+}
+
+.text-pretty {
+  text-wrap: pretty;
+}
+.text-danger {
+  @apply text-red-600;
+}
