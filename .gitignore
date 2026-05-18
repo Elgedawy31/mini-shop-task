@@ -8,19 +8,23 @@ build/
 coverage/
 *.tsbuildinfo
 
-# Environment (never commit — local secrets and overrides)
+# Environment (never commit secrets — templates are allowed)
 .env
-.env.*
 .env.local
 .env.*.local
+!.env.example
+!**/.env.example
 dashboard/.env.development
 dashboard/.env.production
 
 # Logs
 *.log
 npm-debug.log*
+npm-debug.*
 yarn-debug.log*
+yarn-debug.*
 yarn-error.log*
+yarn-error.*
 pnpm-debug.log*
 
 # Editor and OS
@@ -28,7 +32,25 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+*.pem
 
 # Tooling
 .turbo/
 .cache/
+
+# Mobile (Expo) — was mobile/.gitignore
+mobile/.expo/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/ios/
+mobile/android/
+mobile/.kotlin/
+mobile/.metro-health-check*
+
+# Mobile native signing / certs
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
