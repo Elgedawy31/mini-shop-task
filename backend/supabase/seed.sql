@@ -1,2 +1,2 @@
--- Optional SQL seed (categories/products/users are seeded via: bun --cwd backend seed)
+-- Optional SQL seed (categories/products/users: bun run seed from backend/)
 -- This file runs only on `supabase db reset` (local). Remote seed: use backend/scripts/seed.ts

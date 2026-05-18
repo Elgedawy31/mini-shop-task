@@ -15,9 +15,10 @@ REST API for the **Mini Shop** challenge: **Fastify 5**, **TypeScript**, **Supab
 ### 1. Supabase project
 
 1. Create a project at [supabase.com](https://supabase.com) (ref: `sejiiywghkekfvcdqkec`).
-2. Apply migrations via CLI (see [`../supabase/README.md`](../supabase/README.md)):
+2. Apply migrations via CLI (see [`supabase/README.md`](supabase/README.md)):
 
    ```bash
+   cd backend
    bunx supabase login
    bun run db:link      # enter DB password when prompted
    bun run db:push
@@ -54,7 +55,7 @@ Health: http://localhost:5001/health
 ### 4. Seed data
 
 ```bash
-bun --cwd backend seed
+bun run seed
 ```
 
 | Account  | Email                  | Password     | Role     |
@@ -114,15 +115,12 @@ Also seeds **3 categories** and **11 products**.
 ## Project structure
 
 ```text
-backend/src/
-├── config/env.ts       # Zod-validated env
-├── lib/                # Supabase clients, validate helpers
-├── plugins/            # Auth, error handler
-├── schemas/            # Zod request schemas
-├── services/           # Domain logic
-├── routes/             # HTTP routes
-├── utils/              # Order status rules, pagination
-└── types/              # Domain + Fastify augmentation
+backend/
+├── src/                # Fastify API
+├── supabase/           # Migrations, config.toml (CLI)
+│   └── migrations/
+├── scripts/            # seed.ts
+└── .env                # Supabase keys (gitignored)
 ```
 
 ---
@@ -130,11 +128,14 @@ backend/src/
 ## Scripts
 
 ```bash
-bun dev          # Watch on :5001
-bun build        # Compile to dist/
-bun start        # Run dist/server.js
-bun seed         # Seed categories, products, test users
-bun test         # Unit tests
+bun dev            # Watch on :5001
+bun build          # Compile to dist/
+bun start          # Run dist/server.js
+bun run seed       # Seed categories, products, test users
+bun run db:link    # Link Supabase project (run from backend/)
+bun run db:push    # Apply migrations
+bun run db:migration -- name
+bun test
 bun run typecheck
 ```
 
@@ -169,5 +170,6 @@ supabase
 
 ## Related docs
 
+- [Supabase migrations](supabase/README.md)
 - [Root README](../README.md)
 - [Dashboard README](../dashboard/README.md)

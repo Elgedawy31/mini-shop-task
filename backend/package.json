@@ -8,6 +8,10 @@
     "build": "tsc -p tsconfig.json",
     "start": "bun dist/server.js",
     "seed": "bun scripts/seed.ts",
+    "db:link": "supabase link --project-ref sejiiywghkekfvcdqkec",
+    "db:push": "supabase db push",
+    "db:migration": "supabase migration new",
+    "db:status": "supabase migration list",
     "test": "bun test src",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit"

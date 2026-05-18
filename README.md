@@ -83,20 +83,25 @@ Set `VITE_API_BASE_URL` before `bun run build:dashboard` when the API is not on 
 
 ## Database (Supabase CLI)
 
+Run from **`backend/`** (migrations live in `backend/supabase/`):
+
 ```bash
+cd backend
 bunx supabase login
 bun run db:link    # project sejiiywghkekfvcdqkec
-bun run db:push    # apply migrations
-bun run db:seed    # test users + products
+bun run db:push
+bun run seed
 ```
 
-See [supabase/README.md](supabase/README.md).
+Or from repo root: `bun --cwd backend run db:push`
+
+See [backend/supabase/README.md](backend/supabase/README.md).
 
 ## Documentation
 
 - [Dashboard README](dashboard/README.md) — admin UI setup, features, structure
 - [Backend README](backend/README.md) — API setup and route contract
-- [Supabase README](supabase/README.md) — migrations, `db push`, link
+- [Supabase README](backend/supabase/README.md) — migrations, `db push`, link
 
 ---
 
