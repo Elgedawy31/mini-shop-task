@@ -63,23 +63,57 @@ bun dev:backend         # backend only
 
 ## For reviewers — setup in 5 minutes
 
-This repo includes **`.env.example` files only** (placeholders). Real Supabase keys must go in **gitignored** `.env` files on your machine.
+Use the **shared test Supabase project** below (no need to create your own), or follow [`backend/.env.example`](backend/.env.example) with your project.
 
-1. **Supabase** — create a free project at [supabase.com](https://supabase.com), or use your own existing project.
-2. **Backend**
-   ```bash
-   cd backend && cp .env.example .env
-   ```
-   Paste **your** `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` into `.env` (Dashboard → Project Settings → API).  
-   **Do not commit `.env`.** Never put service-role keys or DB passwords in `.env.example`.
-3. **Database**
-   ```bash
-   bun run db:link && bun run db:push && bun run seed
-   ```
-4. **Run** — `bun dev` (API + dashboard) and `cd mobile && npm start` (Expo).
-5. **Sign in** with the seeded test accounts below (no registration required for review).
+> **Note:** This is a **disposable test project** for the Mini Shop challenge only. Do not use it for production. The service role key bypasses RLS — keep it server-side (`backend/.env` only).
 
-The same test account table is repeated in each app’s `.env.example` header for convenience.
+### Shared test Supabase project
+
+| Field          | Value                                                       |
+| -------------- | ----------------------------------------------------------- |
+| Project ref    | `sejiiywghkekfvcdqkec`                                      |
+| Dashboard      | https://supabase.com/dashboard/project/sejiiywghkekfvcdqkec |
+| API URL        | `https://sejiiywghkekfvcdqkec.supabase.co`                  |
+| Storage bucket | `product-images` (public)                                   |
+
+**API keys** (paste into `backend/.env`):
+
+| Variable                    | Value                                                                                                                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`              | `https://sejiiywghkekfvcdqkec.supabase.co`                                                                                                                                                                                    |
+| `SUPABASE_ANON_KEY`         | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlamlpeXdnaGtla2Z2Y2Rxa2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMDE5NzQsImV4cCI6MjA5NDY3Nzk3NH0.2LMrdMR2oI7mUCP7MG0bwdc1UCVIMxENJjq696EkkKU`            |
+| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlamlpeXdnaGtla2Z2Y2Rxa2VjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEwMTk3NCwiZXhwIjoyMDk0Njc3OTc0fQ.PYLpOG5l6Lv6LwAHuAL0EE6jh2Q8Tq6Q81QxaiYmcIE` |
+
+**Optional — dashboard Realtime** (`dashboard/.env.development`):
+
+```bash
+VITE_API_BASE_URL=http://localhost:5001
+VITE_SUPABASE_URL=https://sejiiywghkekfvcdqkec.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlamlpeXdnaGtla2Z2Y2Rxa2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMDE5NzQsImV4cCI6MjA5NDY3Nzk3NH0.2LMrdMR2oI7mUCP7MG0bwdc1UCVIMxENJjq696EkkKU
+```
+
+**Quick `backend/.env` copy-paste:**
+
+```bash
+PORT=5001
+HOST=0.0.0.0
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5000,http://localhost:8081,http://127.0.0.1:8081
+
+SUPABASE_URL=https://sejiiywghkekfvcdqkec.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlamlpeXdnaGtla2Z2Y2Rxa2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMDE5NzQsImV4cCI6MjA5NDY3Nzk3NH0.2LMrdMR2oI7mUCP7MG0bwdc1UCVIMxENJjq696EkkKU
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNlamlpeXdnaGtla2Z2Y2Rxa2VjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3OTEwMTk3NCwiZXhwIjoyMDk0Njc3OTc0fQ.PYLpOG5l6Lv6LwAHuAL0EE6jh2Q8Tq6Q81QxaiYmcIE
+STORAGE_BUCKET=product-images
+```
+
+### Steps
+
+1. `cd backend && cp .env.example .env` — then paste the block above into `.env` (or merge with your file).
+2. First time only: `bun run db:link && bun run db:push && bun run seed` (schema + demo users/products).
+3. `bun dev` from repo root (API + dashboard) and `cd mobile && npm start` (Expo).
+4. Sign in with [test accounts](#test-accounts) below.
+
+Migrations are already applied on the shared project; **`bun run seed`** is only needed if users/products are missing.
 
 ---
 
@@ -119,7 +153,7 @@ Seed also creates **3 categories** and **11 products**.
 
 ## Environment
 
-**Never commit `.env` files.** Each app has a committed **`.env.example`** with setup steps and **test account emails/passwords** (safe to share). **Supabase API keys and database passwords must only live in `.env`**, which is gitignored.
+**Do not commit `backend/.env`.** Shared **test** Supabase keys are documented in [For reviewers](#for-reviewers--setup-in-5-minutes) so evaluators can run the app quickly. `.env.example` files stay as placeholders for anyone using their own project.
 
 ### Backend — `backend/.env` (required)
 
