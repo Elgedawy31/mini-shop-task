@@ -62,7 +62,6 @@ Override via `backend/.env` or `dashboard/.env.development` (see `.env.example` 
 ```bash
 bun lint
 bun format:check
-bun test
 ```
 
 Husky runs lint-staged before commits.

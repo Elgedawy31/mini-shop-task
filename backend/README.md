@@ -142,11 +142,10 @@ backend/
 bun dev            # Watch on :5001
 bun build          # Compile to dist/
 bun start          # Run dist/server.js
-bun run seed       # Seed categories, products, test users
+bun run seed       # Seed categories, products, demo users
 bun run db:link    # Link Supabase project (run from backend/)
 bun run db:push    # Apply migrations
 bun run db:migration -- name
-bun test
 bun run typecheck
 ```
 
@@ -154,16 +153,15 @@ bun run typecheck
 
 ## PDF Part 2 checklist
 
-| Area                                               | Status                      |
-| -------------------------------------------------- | --------------------------- |
-| Auth routes (register, login, forgot password, me) | Done                        |
-| Products CRUD + image upload                       | Done                        |
-| Orders (create, my, admin list, status update)     | Done                        |
-| Categories list for mobile filters                 | `GET /categories`           |
-| Zod validation + error contract                    | Done                        |
-| RLS + role checks                                  | Done                        |
-| Seed (11 products, 3 categories, 2 users)          | `bun run seed`              |
-| Unit tests                                         | `bun test ./src` (19 tests) |
+| Area                                               | Status            |
+| -------------------------------------------------- | ----------------- |
+| Auth routes (register, login, forgot password, me) | Done              |
+| Products CRUD + image upload                       | Done              |
+| Orders (create, my, admin list, status update)     | Done              |
+| Categories list for mobile filters                 | `GET /categories` |
+| Zod validation + error contract                    | Done              |
+| RLS + role checks                                  | Done              |
+| Seed (11 products, 3 categories, 2 users)          | `bun run seed`    |
 
 ## Security
 

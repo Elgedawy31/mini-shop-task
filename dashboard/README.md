@@ -120,10 +120,9 @@ Template: [`.env.example`](.env.example).
 bun dev          # Vite dev server — port 5000 (strictPort)
 bun build        # Typecheck + production build
 bun preview      # Preview build on port 5000
-bun test         # Vitest
 ```
 
-From monorepo root: `bun lint`, `bun test`, `bun run build`.
+From monorepo root: `bun lint`, `bun run build`.
 
 ---
 

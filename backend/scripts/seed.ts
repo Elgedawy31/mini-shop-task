@@ -156,7 +156,7 @@ async function main() {
     }
   }
 
-  console.log("Creating test users...");
+  console.log("Creating demo users...");
   await upsertUser("customer@minishop.test", "Customer123!", "Test Customer", "customer");
   await upsertUser("admin@minishop.test", "Admin12345!", "Test Admin", "admin");
 
