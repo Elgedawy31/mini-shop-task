@@ -1,5 +1,6 @@
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
+import multipart from "@fastify/multipart";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
 import { registerErrorHandler } from "./plugins/error-handler.js";
@@ -17,6 +18,9 @@ export async function buildApp() {
   await app.register(cors, {
     origin: env.corsOrigin,
     credentials: true,
+  });
+  await app.register(multipart, {
+    limits: { fileSize: 1 * 1024 * 1024 },
   });
 
   registerErrorHandler(app);
