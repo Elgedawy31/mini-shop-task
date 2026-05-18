@@ -1,4 +1,4 @@
-const DEFAULT_PORT = 4000;
+const DEFAULT_PORT = 5001;
 
 function readPort(value: string | undefined): number {
   if (!value) {

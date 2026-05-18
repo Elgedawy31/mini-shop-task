@@ -47,8 +47,8 @@ docker compose -f docker-compose.dev.yml up --build
 ```
 
 - Dashboard: http://localhost:5000
-- Backend: http://localhost:4000
-- Health check: http://localhost:4000/health
+- Backend: http://localhost:5001
+- Health check: http://localhost:5001/health
 
 Production-style local run:
 
@@ -57,11 +57,13 @@ docker compose -f docker-compose.prod.yml up --build
 ```
 
 - Dashboard: http://localhost:8080
-- Backend: http://localhost:4000
-- Health check: http://localhost:4000/health
+- Backend: http://localhost:5001
+- Health check: http://localhost:5001/health
 
 Override ports or origins with environment variables:
 
 ```bash
-DASHBOARD_PORT=8081 BACKEND_PORT=4001 VITE_API_BASE_URL=http://localhost:4001 CORS_ORIGIN=http://localhost:8081 docker compose -f docker-compose.prod.yml up --build
+DASHBOARD_PORT=8081 BACKEND_PORT=5002 VITE_API_BASE_URL=http://localhost:5002 CORS_ORIGIN=http://localhost:8081 docker compose -f docker-compose.prod.yml up --build
 ```
+
+For local development without Docker, set `PORT=5001`, `CORS_ORIGIN=http://localhost:5000`, and `VITE_API_BASE_URL=http://localhost:5001` in your environment.

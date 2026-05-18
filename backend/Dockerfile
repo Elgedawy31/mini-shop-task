@@ -9,7 +9,7 @@ COPY backend/package.json ./backend/package.json
 RUN bun install --frozen-lockfile
 COPY backend ./backend
 WORKDIR /app/backend
-EXPOSE 4000
+EXPOSE 5001
 CMD ["bun", "dev"]
 
 FROM base AS build
@@ -30,5 +30,5 @@ COPY backend/package.json ./backend/package.json
 RUN bun install --production --frozen-lockfile --ignore-scripts
 COPY --from=build /app/backend/dist ./backend/dist
 WORKDIR /app/backend
-EXPOSE 4000
+EXPOSE 5001
 CMD ["bun", "dist/server.js"]
