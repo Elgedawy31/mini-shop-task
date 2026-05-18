@@ -31,14 +31,14 @@ Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **
 
 ## Features (Mini Shop task — Part 3)
 
-| Area               | Capability                                                                    |
-| ------------------ | ----------------------------------------------------------------------------- |
-| **Authentication** | Admin-only email/password login via API; JWT in httpOnly-style cookie storage |
-| **Dashboard**      | KPI cards: orders today, revenue today, active products                       |
-| **Products**       | Table with create / edit / toggle active; image upload _(planned)_            |
-| **Orders**         | Status filter, update status, detail view _(planned)_                         |
-| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme         |
-| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files      |
+| Area               | Capability                                                               |
+| ------------------ | ------------------------------------------------------------------------ |
+| **Authentication** | Admin-only email/password login via Fastify API; JWT stored in cookie    |
+| **Dashboard**      | KPI cards: orders today, revenue today, active products                  |
+| **Products**       | Table with create / edit / toggle active; image upload _(planned)_       |
+| **Orders**         | Status filter, update status, detail view _(planned)_                    |
+| **UX**             | Sidebar layout, responsive shell, skeletons, toasts, dark/light theme    |
+| **Branding**       | Lucide storefront icon via `Logo` component — no static logo image files |
 
 ### Implementation status
 
@@ -50,7 +50,6 @@ Part of a **Bun monorepo** with no Docker: dashboard on **port 5000**, API on **
 | Dashboard KPIs (`/dashboard/stats`)  | Done    |
 | Products CRUD pages                  | Planned |
 | Orders management pages              | Planned |
-| Google OAuth sign-in                 | Planned |
 
 ---
 

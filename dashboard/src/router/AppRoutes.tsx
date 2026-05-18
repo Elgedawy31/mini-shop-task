@@ -8,7 +8,6 @@ import { FullScreenLoader } from "@/shared/components/molecules/FullScreenLoader
 // Lazy load pages for performance
 const DashboardPage = lazy(() => import("@/features/dashboard/pages/DashboardPage"));
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
-const OAuthCallbackPage = lazy(() => import("@/features/auth/pages/OAuthCallbackPage"));
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home },
@@ -25,7 +24,6 @@ export function AppRoutes() {
         <Routes>
           {/* Public Routes */}
           <Route path="/sign-in" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<OAuthCallbackPage />} />
 
           {/* Protected Layout Routes */}
           <Route
