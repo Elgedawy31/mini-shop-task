@@ -11,6 +11,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { queryClient } from "@/lib/queryClient";
 import { theme } from "@/theme/theme";
+import { AppThemeProvider, useAppTheme } from "@/theme/ThemeContext";
 import { AuthProvider } from "@/features/auth/AuthContext";
 import { CartProvider } from "@/features/cart/CartContext";
 import { ToastHost } from "@/ui/Toast";
@@ -61,16 +62,30 @@ export default function RootLayout() {
 }
 
 function RootLayoutNav() {
+  return (
+    <SafeAreaProvider>
+      <KeyboardProvider>
+        <AppThemeProvider>
+          <ThemedNavigation />
+        </AppThemeProvider>
+      </KeyboardProvider>
+    </SafeAreaProvider>
+  );
+}
+
+function ThemedNavigation() {
+  const { colors, isDark } = useAppTheme();
+
   const navTheme = useMemo<Theme>(
     () => ({
-      dark: true,
+      dark: isDark,
       colors: {
-        primary: theme.colors.primary,
-        background: theme.colors.bg,
-        card: theme.colors.surface,
-        text: theme.colors.text,
-        border: theme.colors.border,
-        notification: theme.colors.primary2,
+        primary: colors.primary,
+        background: colors.bg,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.primary2,
       },
       fonts: {
         regular: { fontFamily: theme.font.regular, fontWeight: "400" },
@@ -79,41 +94,37 @@ function RootLayoutNav() {
         heavy: { fontFamily: theme.font.bold, fontWeight: "700" },
       },
     }),
-    []
+    [colors, isDark]
   );
 
   return (
-    <SafeAreaProvider>
-      <KeyboardProvider>
-        <ThemeProvider value={navTheme}>
-          <QueryClientProvider client={queryClient}>
-            <AuthProvider>
-              <CartProvider>
-                <Stack
-                  screenOptions={{
-                    headerTintColor: theme.colors.text,
-                    headerStyle: { backgroundColor: theme.colors.surface },
-                    headerTitleStyle: {
-                      fontFamily: theme.font.semibold,
-                      fontSize: 16,
-                    },
-                    headerShadowVisible: false,
-                    contentStyle: { backgroundColor: theme.colors.bg },
-                  }}
-                >
-                  <Stack.Screen name="splash" options={{ headerShown: false }} />
-                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                  <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                  <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
-                  <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
-                  <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
-                </Stack>
-                <ToastHost />
-              </CartProvider>
-            </AuthProvider>
-          </QueryClientProvider>
-        </ThemeProvider>
-      </KeyboardProvider>
-    </SafeAreaProvider>
+    <ThemeProvider value={navTheme}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <CartProvider>
+            <Stack
+              screenOptions={{
+                headerTintColor: colors.text,
+                headerStyle: { backgroundColor: colors.surface },
+                headerTitleStyle: {
+                  fontFamily: theme.font.semibold,
+                  fontSize: 16,
+                },
+                headerShadowVisible: false,
+                contentStyle: { backgroundColor: colors.bg },
+              }}
+            >
+              <Stack.Screen name="splash" options={{ headerShown: false }} />
+              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="product/[id]" options={{ headerShown: false }} />
+              <Stack.Screen name="order/[id]" options={{ title: "Order" }} />
+              <Stack.Screen name="+not-found" options={{ title: "Not found" }} />
+            </Stack>
+            <ToastHost />
+          </CartProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }

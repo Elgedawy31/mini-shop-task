@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import type { AuthUser } from "@/lib/api/types";
 import { sessionStore, type StoredSession } from "./session";
 
 type AuthState = {
   session: StoredSession | null;
   isHydrating: boolean;
   setSession: (next: StoredSession | null) => void;
+  updateUser: (user: AuthUser) => Promise<void>;
   refreshFromStore: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -35,6 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isHydrating,
       setSession(next) {
         setSessionState(next);
+      },
+      async updateUser(user) {
+        await sessionStore.updateUser(user);
+        setSessionState((prev) => (prev ? { ...prev, user } : prev));
       },
       async refreshFromStore() {
         const stored = await sessionStore.load();

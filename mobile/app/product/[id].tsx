@@ -11,6 +11,7 @@ import { formatCurrency } from "@/lib/format";
 import { AppText, Button, Card, HStack, VStack } from "@/ui/Primitives";
 import { Skeleton } from "@/ui/Skeleton";
 import { toast } from "@/ui/Toast";
+import { AddToCartButton } from "@/ui/shop/AddToCartButton";
 import { ProductDetailBackButton } from "@/ui/shop/ProductDetailBackButton";
 
 const HERO_HEIGHT = 380;
@@ -189,10 +190,10 @@ export default function ProductDetail() {
           },
         ]}
       >
-        <Button
-          label={canAdd ? "Add to cart" : "Loading…"}
+        <AddToCartButton
           disabled={!canAdd}
-          onPress={() => {
+          loading={!product}
+          onAdd={() => {
             if (!product) return;
             cart.add(product, qty);
             toast("success", "Added to cart", `${qty} × ${product.name}`);

@@ -50,6 +50,10 @@ export const sessionStore = {
     await setJson(KEY_USER, payload.user);
   },
 
+  async updateUser(user: AuthUser) {
+    await setJson(KEY_USER, user);
+  },
+
   async clear() {
     await SecureStore.deleteItemAsync(KEY_TOKEN);
     await SecureStore.deleteItemAsync(KEY_REFRESH);

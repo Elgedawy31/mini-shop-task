@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -19,9 +20,11 @@ import { EmptyState } from "@/ui/EmptyState";
 import { ProductCardSkeleton } from "@/ui/ProductCard";
 import { MasonryProductGrid } from "@/ui/shop/MasonryProductGrid";
 import { ShopCategoryChip } from "@/ui/shop/ShopCategoryChip";
+import { useDebouncedValue } from "@/ui/hooks/useDebouncedValue";
 
 const PAGE_SIZE = 12;
 const SKELETON_ROWS = 4;
+const SEARCH_DEBOUNCE_MS = 400;
 
 function MasonrySkeleton({ rows = SKELETON_ROWS }: { rows?: number }) {
   return (
@@ -54,6 +57,7 @@ function ShopHeader({
   onCategoryChange,
   categoryFilters,
   loadingCats,
+  isSearching,
 }: {
   search: string;
   onSearchChange: (value: string) => void;
@@ -61,6 +65,7 @@ function ShopHeader({
   onCategoryChange: (slug: string) => void;
   categoryFilters: Array<{ slug: string; name: string }>;
   loadingCats: boolean;
+  isSearching?: boolean;
 }) {
   const headerOpacity = useSharedValue(0);
   const headerY = useSharedValue(12);
@@ -96,23 +101,36 @@ function ShopHeader({
         </AppText>
       </View>
 
-      <TextInput
-        value={search}
-        onChangeText={onSearchChange}
-        placeholder="Search products"
-        placeholderTextColor="rgba(244,244,245,0.35)"
-        style={{
-          height: 48,
-          borderRadius: theme.radii.lg,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          backgroundColor: theme.colors.surface2,
-          paddingHorizontal: theme.space[4],
-          color: theme.colors.text,
-          fontFamily: theme.font.regular,
-          fontSize: 14,
-        }}
-      />
+      <View style={{ position: "relative" }}>
+        <TextInput
+          value={search}
+          onChangeText={onSearchChange}
+          placeholder="Search products"
+          placeholderTextColor="rgba(244,244,245,0.35)"
+          autoCorrect={false}
+          autoCapitalize="none"
+          returnKeyType="search"
+          style={{
+            height: 48,
+            borderRadius: theme.radii.lg,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
+            backgroundColor: theme.colors.surface2,
+            paddingHorizontal: theme.space[4],
+            paddingRight: isSearching ? 44 : theme.space[4],
+            color: theme.colors.text,
+            fontFamily: theme.font.regular,
+            fontSize: 14,
+          }}
+        />
+        {isSearching ? (
+          <ActivityIndicator
+            size="small"
+            color={theme.colors.primary2}
+            style={{ position: "absolute", right: 14, top: 14 }}
+          />
+        ) : null}
+      </View>
 
       <FlatList
         data={categoryFilters}
@@ -142,8 +160,9 @@ function ShopHeader({
 }
 
 export default function Shop() {
-  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const debouncedSearch = useDebouncedValue(searchQuery, SEARCH_DEBOUNCE_MS);
 
   const { data: categories = [], isLoading: loadingCats } = useCategories();
 
@@ -155,10 +174,10 @@ export default function Shop() {
   const listParams = useMemo(
     () => ({
       limit: PAGE_SIZE,
-      search: search.trim() ? search.trim() : undefined,
+      search: debouncedSearch.trim() ? debouncedSearch.trim() : undefined,
       category: category === "all" ? undefined : category,
     }),
-    [category, search]
+    [category, debouncedSearch]
   );
 
   const { data, isLoading, isFetching, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
@@ -166,7 +185,16 @@ export default function Shop() {
 
   const products = useMemo(() => data?.pages.flatMap((page) => page.items) ?? [], [data?.pages]);
 
-  const gridKey = useMemo(() => `${category}-${search.trim()}`, [category, search]);
+  const isSearchPending =
+    searchQuery.trim() !== debouncedSearch.trim() ||
+    (isFetching && !isFetchingNextPage && !isLoading);
+
+  const isInitialLoading = isLoading && products.length === 0;
+
+  const gridKey = useMemo(
+    () => `${category}-${debouncedSearch.trim()}`,
+    [category, debouncedSearch]
+  );
 
   const handleScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -184,69 +212,55 @@ export default function Shop() {
     router.push(`/product/${product.id}`);
   }, []);
 
-  const header = (
-    <ShopHeader
-      search={search}
-      onSearchChange={setSearch}
-      category={category}
-      onCategoryChange={setCategory}
-      categoryFilters={categoryFilters}
-      loadingCats={loadingCats}
-    />
-  );
-
-  if (isLoading) {
-    return (
-      <Screen padded={false}>
-        {header}
-        <MasonrySkeleton />
-      </Screen>
-    );
-  }
-
-  if (products.length === 0) {
-    return (
-      <Screen padded={false}>
-        {header}
-        <View style={{ padding: theme.space[4] }}>
-          <EmptyState
-            title="No products found"
-            description="Try a different search or category."
-            actionLabel="Reset filters"
-            onAction={() => {
-              setSearch("");
-              setCategory("all");
-              void refetch();
-            }}
-          />
-        </View>
-      </Screen>
-    );
-  }
-
   return (
     <Screen padded={false}>
       <Animated.ScrollView
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={handleScroll}
+        keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingBottom: theme.space[8], gap: 12 }}
         refreshControl={
           <RefreshControl
-            refreshing={isFetching && !isFetchingNextPage}
+            refreshing={isFetching && !isFetchingNextPage && !isSearchPending}
             onRefresh={() => void refetch()}
             tintColor={theme.colors.primary2}
           />
         }
       >
-        {header}
-
-        <MasonryProductGrid
-          key={gridKey}
-          products={products}
-          onPressProduct={handleProductPress}
-          animate
+        <ShopHeader
+          search={searchQuery}
+          onSearchChange={setSearchQuery}
+          category={category}
+          onCategoryChange={setCategory}
+          categoryFilters={categoryFilters}
+          loadingCats={loadingCats}
+          isSearching={isSearchPending}
         />
+
+        {isInitialLoading ? (
+          <MasonrySkeleton />
+        ) : products.length === 0 ? (
+          <View style={{ padding: theme.space[4] }}>
+            <EmptyState
+              title="No products found"
+              description="Try a different search or category."
+              actionLabel="Reset filters"
+              onAction={() => {
+                setSearchQuery("");
+                setCategory("all");
+                void refetch();
+              }}
+            />
+          </View>
+        ) : (
+          <MasonryProductGrid
+            key={gridKey}
+            products={products}
+            onPressProduct={handleProductPress}
+            animate={false}
+          />
+        )}
 
         {isFetchingNextPage ? <MasonrySkeleton rows={1} /> : <View style={{ height: 16 }} />}
       </Animated.ScrollView>

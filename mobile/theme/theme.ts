@@ -1,4 +1,6 @@
-export const theme = {
+import { darkColors, type ThemeColors } from "@/theme/palettes";
+
+export const themeTokens = {
   radii: {
     sm: 10,
     md: 14,
@@ -22,21 +24,19 @@ export const theme = {
     semibold: "Poppins_600SemiBold",
     bold: "Poppins_700Bold",
   },
-  colors: {
-    // Dark by default, aligned with dashboard direction.
-    bg: "#0B0B0D",
-    surface: "#141419",
-    surface2: "#1A1B22",
-    text: "#F4F4F5",
-    muted: "#A1A1AA",
-    border: "rgba(255,255,255,0.10)",
-    primary: "#BB4D00",
-    primary2: "#FF7A18",
-    success: "#22C55E",
-    warning: "#F59E0B",
-    danger: "#EF4444",
-    info: "#60A5FA",
-  },
 } as const;
+
+let activeColors: ThemeColors = { ...darkColors };
+
+export function setActiveThemeColors(colors: ThemeColors) {
+  activeColors = colors;
+}
+
+export const theme = {
+  ...themeTokens,
+  get colors() {
+    return activeColors;
+  },
+};
 
 export type AppTheme = typeof theme;

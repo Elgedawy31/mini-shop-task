@@ -1,5 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Animated, Text, View } from "react-native";
+import type { ComponentProps } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { StyleSheet, Text, View } from "react-native";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import Animated, { FadeInDown, FadeOutUp } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
 import { theme } from "@/theme/theme";
 
 export type ToastKind = "success" | "error" | "info";
@@ -11,111 +16,118 @@ export function toast(kind: ToastKind, title: string, message?: string) {
   pushToast?.({ kind, title, message });
 }
 
-export function ToastHost() {
-  const [items, setItems] = useState<ToastMessage[]>([]);
-  const anim = useRef(new Animated.Value(0)).current;
+const TOAST_ICONS: Record<ToastKind, ComponentProps<typeof FontAwesome>["name"]> = {
+  success: "check-circle",
+  error: "exclamation-circle",
+  info: "info-circle",
+};
 
-  const api = useMemo(() => {
-    pushToast = (toastInput) => {
-      const id = String(Date.now()) + Math.random().toString(16).slice(2);
-      setItems((prev) => [...prev, { id, ...toastInput }].slice(-2));
-    };
-    return null;
-  }, []);
-
-  useEffect(() => {
-    if (items.length === 0) return;
-    anim.setValue(0);
-    Animated.spring(anim, { toValue: 1, useNativeDriver: true, damping: 18, stiffness: 180 }).start(
-      () => {
-        const t = setTimeout(() => {
-          Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: true }).start(() => {
-            setItems((prev) => prev.slice(1));
-          });
-        }, 2200);
-        return () => clearTimeout(t);
-      }
-    );
-  }, [anim, items]);
-
-  if (items.length === 0) return null;
-  const current = items[0];
+function ToastCard({ item, onDismiss }: { item: ToastMessage; onDismiss: () => void }) {
   const accent =
-    current.kind === "success"
+    item.kind === "success"
       ? theme.colors.success
-      : current.kind === "error"
+      : item.kind === "error"
         ? theme.colors.danger
         : theme.colors.info;
 
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 2600);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
   return (
     <Animated.View
-      pointerEvents="none"
-      style={{
-        position: "absolute",
-        left: theme.space[4],
-        right: theme.space[4],
-        top: theme.space[6],
-        transform: [
-          {
-            translateY: anim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-18, 0],
-            }),
-          },
-        ],
-        opacity: anim,
-      }}
+      entering={FadeInDown.springify().damping(18).stiffness(220)}
+      exiting={FadeOutUp.duration(240)}
+      style={styles.card}
     >
-      <View
-        style={{
-          borderRadius: theme.radii.lg,
-          backgroundColor: theme.colors.surface2,
-          borderWidth: 1,
-          borderColor: theme.colors.border,
-          paddingVertical: theme.space[3],
-          paddingHorizontal: theme.space[4],
-          shadowColor: "#000",
-          shadowOpacity: 0.35,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 12 },
-        }}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <View
-            style={{
-              width: 10,
-              height: 10,
-              borderRadius: 999,
-              backgroundColor: accent,
-            }}
-          />
-          <View style={{ flex: 1 }}>
-            <Text
-              style={{
-                color: theme.colors.text,
-                fontFamily: theme.font.semibold,
-                fontSize: 14,
-              }}
-              numberOfLines={1}
-            >
-              {current.title}
-            </Text>
-            {current.message ? (
-              <Text
-                style={{
-                  color: theme.colors.muted,
-                  fontFamily: theme.font.regular,
-                  fontSize: 12,
-                  marginTop: 2,
-                }}
-                numberOfLines={2}
-              >
-                {current.message}
-              </Text>
-            ) : null}
-          </View>
-        </View>
+      <View style={[styles.iconWrap, { backgroundColor: `${accent}22` }]}>
+        <FontAwesome name={TOAST_ICONS[item.kind]} size={16} color={accent} />
+      </View>
+      <View style={styles.textWrap}>
+        <Text style={styles.title} numberOfLines={1}>
+          {item.title}
+        </Text>
+        {item.message ? (
+          <Text style={styles.message} numberOfLines={2}>
+            {item.message}
+          </Text>
+        ) : null}
       </View>
     </Animated.View>
   );
 }
+
+export function ToastHost() {
+  const insets = useSafeAreaInsets();
+  const [items, setItems] = useState<ToastMessage[]>([]);
+
+  useMemo(() => {
+    pushToast = (toastInput) => {
+      const id = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      setItems((prev) => [...prev, { id, ...toastInput }].slice(-3));
+    };
+    return null;
+  }, []);
+
+  if (items.length === 0) return null;
+
+  return (
+    <View pointerEvents="box-none" style={[styles.host, { top: insets.top + theme.space[2] }]}>
+      {items.map((item) => (
+        <ToastCard
+          key={item.id}
+          item={item}
+          onDismiss={() => setItems((prev) => prev.filter((t) => t.id !== item.id))}
+        />
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  host: {
+    position: "absolute",
+    left: theme.space[4],
+    right: theme.space[4],
+    zIndex: 100,
+    gap: 10,
+  },
+  card: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: theme.radii.lg,
+    backgroundColor: theme.colors.surface2,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingVertical: theme.space[3],
+    paddingHorizontal: theme.space[4],
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textWrap: {
+    flex: 1,
+    gap: 2,
+  },
+  title: {
+    color: theme.colors.text,
+    fontFamily: theme.font.semibold,
+    fontSize: 14,
+  },
+  message: {
+    color: theme.colors.muted,
+    fontFamily: theme.font.regular,
+    fontSize: 12,
+  },
+});

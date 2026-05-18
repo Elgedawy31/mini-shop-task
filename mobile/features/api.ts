@@ -20,6 +20,13 @@ export const api = {
     me(): Promise<ApiResponse<{ user: AuthSessionPayload["user"] }>> {
       return apiClient.get<{ user: AuthSessionPayload["user"] }>("/auth/me");
     },
+    updateMe(input: {
+      name?: string;
+      email?: string;
+      password?: string;
+    }): Promise<ApiResponse<{ user: AuthSessionPayload["user"] }>> {
+      return apiClient.patch<{ user: AuthSessionPayload["user"] }>("/auth/me", input);
+    },
   },
 
   categories: {

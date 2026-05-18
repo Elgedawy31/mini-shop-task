@@ -1,15 +1,78 @@
-import { Image, Pressable, ScrollView, View } from "react-native";
+import { useCallback, useEffect } from "react";
+import { FlatList, View } from "react-native";
 import { router } from "expo-router";
-import { useMemo } from "react";
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 
-import { useCart } from "@/features/cart/CartContext";
+import { useCart, type CartItem } from "@/features/cart/CartContext";
 import { useCheckout } from "@/features/hooks";
 import { useAuth } from "@/features/auth/AuthContext";
 import { theme } from "@/theme/theme";
-import { formatCurrency } from "@/lib/format";
-import { AppText, Button, Card, HStack, Screen, VStack } from "@/ui/Primitives";
-import { EmptyState } from "@/ui/EmptyState";
+import { AppText, Screen } from "@/ui/Primitives";
+import { Skeleton } from "@/ui/Skeleton";
 import { toast } from "@/ui/Toast";
+import { CartEmptyState } from "@/ui/cart/CartEmptyState";
+import { CartLineItem } from "@/ui/cart/CartLineItem";
+import { CartSummaryBar } from "@/ui/cart/CartSummaryBar";
+
+function CartHeader({ itemCount }: { itemCount: number }) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(10);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 350 });
+    translateY.value = withTiming(0, { duration: 350 });
+  }, [opacity, translateY]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        {
+          paddingHorizontal: theme.space[4],
+          paddingTop: theme.space[4],
+          paddingBottom: theme.space[3],
+          gap: 4,
+        },
+        style,
+      ]}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <AppText size={22} weight="bold">
+          Cart
+        </AppText>
+        {itemCount > 0 ? (
+          <View
+            style={{
+              paddingHorizontal: 10,
+              paddingVertical: 4,
+              borderRadius: 999,
+              backgroundColor: "rgba(255,122,24,0.14)",
+              borderWidth: 1,
+              borderColor: "rgba(255,122,24,0.28)",
+            }}
+          >
+            <AppText size={11} weight="semibold" color={theme.colors.primary2}>
+              {itemCount}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
+      <AppText size={12} color={theme.colors.muted}>
+        {itemCount === 0
+          ? "Add products from the shop to get started"
+          : `${itemCount} item${itemCount === 1 ? "" : "s"} ready for checkout`}
+      </AppText>
+    </Animated.View>
+  );
+}
+
+function CartLineSkeleton() {
+  return <Skeleton height={148} style={{ borderRadius: theme.radii.xl }} />;
+}
 
 export default function Cart() {
   const cart = useCart();
@@ -18,7 +81,7 @@ export default function Cart() {
 
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
 
-  const onCheckout = async () => {
+  const onCheckout = useCallback(async () => {
     if (!auth.session?.token) {
       toast("info", "Sign in required", "Please sign in to place an order.");
       router.replace("/(auth)/sign-in");
@@ -34,149 +97,61 @@ export default function Cart() {
     } catch (e) {
       toast("error", "Checkout failed", e instanceof Error ? e.message : "Please try again.");
     }
-  };
+  }, [auth.session?.token, cart, checkout]);
+
+  const renderItem = useCallback(
+    ({ item, index }: { item: CartItem; index: number }) => (
+      <CartLineItem
+        item={item}
+        index={index}
+        onDecrease={() => cart.setQty(item.productId, item.quantity - 1)}
+        onIncrease={() => cart.setQty(item.productId, item.quantity + 1)}
+        onRemove={() => cart.remove(item.productId)}
+      />
+    ),
+    [cart]
+  );
+
+  const listHeader = <CartHeader itemCount={itemCount} />;
+
+  if (cart.isHydrating) {
+    return (
+      <Screen padded={false}>
+        {listHeader}
+        <View style={{ paddingHorizontal: theme.space[4], gap: 12 }}>
+          {Array.from({ length: 3 }).map((_, idx) => (
+            <CartLineSkeleton key={idx} />
+          ))}
+        </View>
+      </Screen>
+    );
+  }
 
   return (
-    <Screen>
-      <VStack gap={14} style={{ flex: 1 }}>
-        <View style={{ gap: 4 }}>
-          <AppText size={22} weight="bold">
-            Cart
-          </AppText>
-          <AppText size={12} color={theme.colors.muted}>
-            {itemCount} item{itemCount === 1 ? "" : "s"} ready for checkout
-          </AppText>
-        </View>
+    <Screen padded={false}>
+      <FlatList<CartItem>
+        data={cart.items}
+        keyExtractor={(item) => item.productId}
+        ListHeaderComponent={listHeader}
+        contentContainerStyle={{
+          paddingHorizontal: theme.space[4],
+          paddingBottom: cart.items.length > 0 ? 200 : theme.space[8],
+          gap: 12,
+          flexGrow: 1,
+        }}
+        showsVerticalScrollIndicator={false}
+        renderItem={renderItem}
+        ListEmptyComponent={<CartEmptyState />}
+      />
 
-        {cart.items.length === 0 ? (
-          <EmptyState
-            title="Your cart is empty"
-            description="Browse products and add what you like."
-            actionLabel="Go to shop"
-            onAction={() => router.replace("/(tabs)/shop")}
-          />
-        ) : (
-          <>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ gap: 12, paddingBottom: 110 }}
-            >
-              {cart.items.map((item) => (
-                <Card key={item.productId} style={{ padding: theme.space[3] }}>
-                  <HStack align="flex-start" gap={12}>
-                    <View
-                      style={{
-                        width: 72,
-                        height: 72,
-                        borderRadius: 18,
-                        overflow: "hidden",
-                        backgroundColor: theme.colors.surface2,
-                      }}
-                    >
-                      {item.imageUrl ? (
-                        <Image
-                          source={{ uri: item.imageUrl }}
-                          style={{ width: "100%", height: "100%" }}
-                        />
-                      ) : (
-                        <View style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
-                      )}
-                    </View>
-
-                    <View style={{ flex: 1, gap: 8 }}>
-                      <AppText weight="semibold" numberOfLines={2}>
-                        {item.name}
-                      </AppText>
-                      <AppText size={12} color={theme.colors.muted}>
-                        {formatCurrency(item.price)}
-                      </AppText>
-
-                      <HStack justify="space-between">
-                        <HStack gap={10}>
-                          <Pressable
-                            onPress={() => cart.setQty(item.productId, item.quantity - 1)}
-                            style={({ pressed }) => ({
-                              width: 38,
-                              height: 38,
-                              borderRadius: 14,
-                              backgroundColor: theme.colors.surface2,
-                              borderWidth: 1,
-                              borderColor: theme.colors.border,
-                              opacity: item.quantity <= 1 ? 0.4 : pressed ? 0.9 : 1,
-                              alignItems: "center",
-                              justifyContent: "center",
-                            })}
-                            disabled={item.quantity <= 1}
-                          >
-                            <AppText weight="bold">−</AppText>
-                          </Pressable>
-                          <View
-                            style={{ width: 26, alignItems: "center", justifyContent: "center" }}
-                          >
-                            <AppText weight="bold">{item.quantity}</AppText>
-                          </View>
-                          <Pressable
-                            onPress={() => cart.setQty(item.productId, item.quantity + 1)}
-                            style={({ pressed }) => ({
-                              width: 38,
-                              height: 38,
-                              borderRadius: 14,
-                              backgroundColor: theme.colors.surface2,
-                              borderWidth: 1,
-                              borderColor: theme.colors.border,
-                              opacity: pressed ? 0.9 : 1,
-                              alignItems: "center",
-                              justifyContent: "center",
-                            })}
-                          >
-                            <AppText weight="bold">+</AppText>
-                          </Pressable>
-                        </HStack>
-
-                        <Pressable onPress={() => cart.remove(item.productId)}>
-                          {({ pressed }) => (
-                            <AppText
-                              size={12}
-                              weight="medium"
-                              color={theme.colors.danger}
-                              style={{ opacity: pressed ? 0.7 : 1 }}
-                            >
-                              Remove
-                            </AppText>
-                          )}
-                        </Pressable>
-                      </HStack>
-                    </View>
-                  </HStack>
-                </Card>
-              ))}
-            </ScrollView>
-
-            <View
-              style={{
-                position: "absolute",
-                left: theme.space[4],
-                right: theme.space[4],
-                bottom: theme.space[4],
-              }}
-            >
-              <Card style={{ padding: theme.space[4] }}>
-                <HStack justify="space-between" style={{ marginBottom: 10 }}>
-                  <AppText size={12} color={theme.colors.muted}>
-                    Subtotal
-                  </AppText>
-                  <AppText weight="bold">{formatCurrency(cart.subtotal)}</AppText>
-                </HStack>
-                <Button
-                  label={checkout.isPending ? "Placing order…" : "Checkout"}
-                  onPress={onCheckout}
-                  loading={checkout.isPending}
-                />
-              </Card>
-            </View>
-          </>
-        )}
-      </VStack>
+      {cart.items.length > 0 ? (
+        <CartSummaryBar
+          itemCount={itemCount}
+          subtotal={cart.subtotal}
+          loading={checkout.isPending}
+          onCheckout={onCheckout}
+        />
+      ) : null}
     </Screen>
   );
 }
