@@ -23,7 +23,7 @@ window.addEventListener("unhandledrejection", (event) => {
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="atomix-ui-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="atomix-ui-theme">
       <QueryClientProvider client={queryClient}>
         <ReactQueryDevtools initialIsOpen={false} />
         <AppRoutes />

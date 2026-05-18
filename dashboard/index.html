@@ -19,11 +19,9 @@
 
     <script>
       // Prevent flash of incorrect theme by setting dark class early
-      if (
-        localStorage.getItem("new-dashboard-ui-theme") === "dark" ||
-        (!localStorage.getItem("new-dashboard-ui-theme") &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches)
-      ) {
+      const storedTheme = localStorage.getItem("atomix-ui-theme");
+
+      if (storedTheme === "dark" || !storedTheme) {
         document.documentElement.classList.add("dark");
       } else {
         document.documentElement.classList.remove("dark");
