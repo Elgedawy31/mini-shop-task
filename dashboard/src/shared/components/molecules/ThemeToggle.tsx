@@ -1,36 +1,32 @@
-import { Moon, Sun, Monitor } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "../atoms/button";
 import { useTheme } from "../../hooks/useTheme";
+const iconButtonClass =
+  "h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground hover:text-foreground hover:bg-accent";
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
-  const toggleTheme = () => {
-    if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("system");
-    } else {
-      setTheme("light");
-    }
-  };
+  const isDark = theme === "dark";
 
-  const getIcon = () => {
-    switch (theme) {
-      case "light":
-        return <Sun className="w-4 h-4" />;
-      case "dark":
-        return <Moon className="w-4 h-4 text-white" />;
-      case "system":
-        return <Monitor className="w-4 h-4 text-primary" />;
-      default:
-        return <Sun className="w-4 h-4" />;
-    }
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark");
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} title={`Current theme: ${theme}`}>
-      {getIcon()}
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggleTheme}
+      className={iconButtonClass}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark ? (
+        <Moon className="w-4 h-4 sm:w-5 sm:h-5" />
+      ) : (
+        <Sun className="w-4 h-4 sm:w-5 sm:h-5" />
+      )}
     </Button>
   );
 }
