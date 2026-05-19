@@ -14,6 +14,10 @@ Each app installs its own dependencies. The repo root only runs shared scripts (
 
 ---
 
+## video
+https://drive.google.com/file/d/146NYBzJcU6fgIYR6NuBHCIkCU15Pz5MP/view?usp=sharing
+
+
 ## Quick start
 
 ### 1. Backend + database
